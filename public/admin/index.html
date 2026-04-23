@@ -343,7 +343,19 @@ async function selectSalon(id, slug, nombre) {
   document.getElementById('new-ev-btn').style.display = 'inline-block';
   document.getElementById('ev-form').style.display = 'none';
   editingEventId = null;
-  renderSidebar();
+  function renderSidebar() {
+  const el = document.getElementById('sidebar-salones');
+  el.innerHTML = allSalones.map((s, i) => `
+    <div class="salon-item ${s.id===activeSalonId?'sel':''}" onclick="selectSalonByIndex(${i})">
+      <span class="salon-nm">${s.nombre}</span>
+      <span class="salon-st ${s.activo?'st-on':'st-off'}">${s.activo?'Activo':'Inactivo'}</span>
+    </div>`).join('');
+}
+
+function selectSalonByIndex(i) {
+  const s = allSalones[i];
+  selectSalon(s.id, s.slug, s.nombre);
+}
   loadEventos();
 }
 
