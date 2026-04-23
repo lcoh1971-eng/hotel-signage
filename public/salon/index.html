@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="60">
+<title>Señalización — Salón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:'DM Sans',sans-serif}
+
+/* ── IDLE SCREEN ── */
+#screen-idle{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#0D0D0B;
+  gap:0;
+}
+.idle-ornament{width:64px;height:1px;background:linear-gradient(to right,transparent,#B8962E,transparent);margin:14px 0}
+.idle-logo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(32px,5vw,64px);
+  color:#D4AF5A;letter-spacing:.12em;font-weight:300;
+  animation:fadeInUp .8s ease both;
+}
+.idle-tagline{
+  font-size:clamp(9px,1.2vw,13px);letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(255,255,255,.25);margin-top:4px;
+  animation:fadeInUp .8s ease .1s both;
+}
+.idle-divider{height:40px}
+.idle-salon-label{
+  font-size:clamp(9px,1vw,11px);letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+  animation:fadeInUp .8s ease .2s both;
+}
+.idle-salon-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(22px,3vw,40px);color:rgba(255,255,255,.65);
+  font-weight:300;letter-spacing:.06em;margin-top:6px;
+  animation:fadeInUp .8s ease .25s both;
+}
+.idle-clock{
+  font-size:clamp(11px,1.2vw,14px);color:rgba(255,255,255,.25);
+  letter-spacing:.14em;margin-top:20px;
+  animation:fadeInUp .8s ease .3s both;
+}
+
+/* ── EVENT SCREEN ── */
+#screen-event{
+  position:fixed;inset:0;display:none;
+}
+.ev-bg{
+  position:absolute;inset:0;background-size:cover;background-position:center;
+  transition:opacity 1s ease;
+}
+.ev-overlay{position:absolute;inset:0}
+.ev-content{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:clamp(24px,4vw,60px);z-index:2;
+}
+
+/* Center content */
+.ev-type{
+  font-size:clamp(9px,1.1vw,13px);letter-spacing:.28em;text-transform:uppercase;
+  color:#D4AF5A;margin-bottom:12px;opacity:.9;
+  animation:fadeInUp .9s ease both;
+}
+.ev-divider{width:52px;height:1px;margin:14px auto;opacity:.6}
+.ev-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(36px,6vw,90px);
+  font-weight:300;color:#fff;line-height:1.05;
+  text-shadow:0 2px 40px rgba(0,0,0,.6);
+  animation:fadeInUp .9s ease .1s both;
+}
+.ev-sub{
+  font-size:clamp(12px,1.4vw,18px);color:rgba(255,255,255,.6);
+  margin-top:16px;letter-spacing:.05em;
+  animation:fadeInUp .9s ease .2s both;
+}
+.ev-time-pill{
+  margin-top:20px;
+  padding:6px 20px;border-radius:30px;
+  background:rgba(0,0,0,.45);
+  border:.5px solid rgba(255,255,255,.15);
+  display:inline-flex;flex-direction:column;align-items:center;
+  animation:fadeInUp .9s ease .3s both;
+}
+.ev-time-pill-label{font-size:clamp(8px,0.85vw,11px);letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.ev-time-pill-val{font-size:clamp(13px,1.5vw,20px);font-weight:500}
+
+/* Corners */
+.corner{position:absolute;z-index:3}
+.corner.tl{top:clamp(16px,2.5vw,36px);left:clamp(20px,3vw,44px)}
+.corner.tr{top:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);text-align:right}
+.corner.bl{bottom:clamp(16px,2.5vw,36px);left:clamp(20px,3vw,44px)}
+.corner.br{bottom:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);text-align:right}
+
+.c-salon-lbl{font-size:clamp(8px,0.85vw,11px);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.c-salon-nm{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,26px);color:rgba(255,255,255,.9);font-weight:400;margin-top:2px}
+.c-logo-main{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,26px);color:#D4AF5A;letter-spacing:.08em;font-weight:600}
+.c-logo-sub{font-size:clamp(7px,0.75vw,10px);letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:2px}
+.c-clock{font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;margin-top:4px}
+
+/* Loading */
+#loading{
+  position:fixed;inset:0;background:#0D0D0B;
+  display:flex;align-items:center;justify-content:center;z-index:99;
+  transition:opacity .5s ease;
+}
+.spinner{width:32px;height:32px;border:2px solid rgba(184,150,46,.2);border-top-color:#B8962E;border-radius:50%;animation:spin .8s linear infinite}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Offline badge */
+.offline-badge{
+  position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(163,45,45,.8);color:#fff;font-size:11px;
+  padding:4px 14px;border-radius:20px;display:none;z-index:999;
+  letter-spacing:.05em;
+}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div></div>
+
+<!-- IDLE -->
+<div id="screen-idle">
+  <div class="idle-logo" id="idle-hotel-name">Grand Palacio</div>
+  <div class="idle-tagline" id="idle-hotel-tagline">Hotel & Resorts</div>
+  <div class="idle-ornament"></div>
+  <div class="idle-divider"></div>
+  <div class="idle-salon-label">Salón</div>
+  <div class="idle-salon-name" id="idle-salon-name">—</div>
+  <div class="idle-clock" id="idle-clock"></div>
+</div>
+
+<!-- EVENT -->
+<div id="screen-event">
+  <div class="ev-bg" id="ev-bg"></div>
+  <div class="ev-overlay" id="ev-overlay"></div>
+
+  <div class="corner tl">
+    <div class="c-salon-lbl">Salón</div>
+    <div class="c-salon-nm" id="ev-salon-name">—</div>
+  </div>
+  <div class="corner tr">
+    <div class="c-logo-main" id="ev-hotel-name">Grand Palacio</div>
+    <div class="c-logo-sub" id="ev-hotel-sub">Hotel & Resorts</div>
+  </div>
+  <div class="corner bl">
+    <div class="c-clock" id="ev-clock"></div>
+  </div>
+
+  <div class="ev-content">
+    <div class="ev-type" id="ev-type">—</div>
+    <div class="ev-name" id="ev-name">—</div>
+    <div class="ev-divider" id="ev-divider"></div>
+    <div class="ev-sub" id="ev-sub"></div>
+    <div class="ev-time-pill">
+      <div class="ev-time-pill-label">Hasta las</div>
+      <div class="ev-time-pill-val" id="ev-until">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="offline-badge" id="offline-badge">Sin conexión · reintentando…</div>
+
+<script>
+const BASE = '/.netlify/functions';
+
+// Hotel branding (can be overridden via URL param ?hotel=NombreHotel&sub=Tagline)
+const params = new URLSearchParams(location.search);
+const HOTEL_NAME = params.get('hotel') || 'Grand Palacio';
+const HOTEL_SUB  = params.get('sub')   || 'Hotel & Resorts';
+
+// Get salon slug from URL: /salon/imperial → 'imperial'
+const slug = location.pathname.split('/').filter(Boolean).pop();
+
+// Set hotel name everywhere
+document.getElementById('idle-hotel-name').textContent  = HOTEL_NAME;
+document.getElementById('idle-hotel-tagline').textContent= HOTEL_SUB;
+document.getElementById('ev-hotel-name').textContent     = HOTEL_NAME;
+document.getElementById('ev-hotel-sub').textContent      = HOTEL_SUB;
+
+let currentEventId = null;
+
+async function fetchStatus() {
+  try {
+    const r = await fetch(`${BASE}/eventos?salon_slug=${slug}`);
+    if (!r.ok) throw new Error('API error');
+    const d = await r.json();
+    document.getElementById('offline-badge').style.display = 'none';
+    renderState(d);
+  } catch(e) {
+    document.getElementById('offline-badge').style.display = 'block';
+  }
+}
+
+function renderState(d) {
+  const ev = d.evento;
+  const salonName = d.salon || slug;
+
+  document.getElementById('idle-salon-name').textContent = salonName;
+  document.getElementById('ev-salon-name').textContent   = salonName;
+
+  if (ev) {
+    document.getElementById('screen-idle').style.display  = 'none';
+    document.getElementById('screen-event').style.display = 'block';
+
+    // Background image
+    const bg = document.getElementById('ev-bg');
+    if (ev.imagen_url) {
+      bg.style.backgroundImage = `url('${ev.imagen_url}')`;
+      bg.style.display = 'block';
+    } else {
+      bg.style.backgroundImage = 'none';
+      bg.style.background = '#1A1A1A';
+    }
+
+    // Overlay with accent color
+    const acento = ev.color_acento || '#B8962E';
+    const ov = document.getElementById('ev-overlay');
+    ov.style.background = `linear-gradient(135deg,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.2) 50%,rgba(0,0,0,0.65) 100%)`;
+
+    // Content
+    document.getElementById('ev-type').textContent  = ev.tipo || '';
+    document.getElementById('ev-name').textContent  = ev.nombre || '';
+    document.getElementById('ev-sub').textContent   = ev.subtitulo || '';
+    document.getElementById('ev-until').textContent = ev.hora_fin ? ev.hora_fin.slice(0,5)+' hrs' : '';
+    document.getElementById('ev-until').style.color = acento;
+    document.getElementById('ev-divider').style.background = acento;
+  } else {
+    document.getElementById('screen-event').style.display = 'none';
+    document.getElementById('screen-idle').style.display  = 'flex';
+  }
+
+  // Hide loading
+  const loader = document.getElementById('loading');
+  loader.style.opacity = '0';
+  setTimeout(()=> loader.style.display='none', 500);
+}
+
+// Clock
+function updateClock() {
+  const t = new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('idle-clock').textContent = t;
+  document.getElementById('ev-clock').textContent   = t;
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+// Poll every 30 seconds
+fetchStatus();
+setInterval(fetchStatus, 30000);
+</script>
+</body>
+</html>
