@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="60">
 <title>Señalización — Salón</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -11,53 +10,42 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:'DM Sans',sans-serif}
 
-/* ── IDLE SCREEN ── */
-#screen-idle{
-  position:fixed;inset:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:#0D0D0B;
-}
+#screen-idle{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0D0D0B;}
 .idle-ornament{width:64px;height:1px;background:linear-gradient(to right,transparent,#B8962E,transparent);margin:14px 0}
 .idle-divider{height:30px}
 .idle-salon-label{font-size:clamp(9px,1vw,11px);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.35);}
 .idle-salon-name{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,3vw,48px);color:rgba(255,255,255,.75);font-weight:300;letter-spacing:.06em;margin-top:6px;}
 .idle-clock{font-size:clamp(11px,1.2vw,14px);color:rgba(255,255,255,.25);letter-spacing:.14em;margin-top:20px;}
 
-/* ── EVENT SCREEN ── */
 #screen-event{position:fixed;inset:0;display:none;}
-.ev-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
-.ev-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.2) 50%,rgba(0,0,0,0.65) 100%);}
 
-/* Center content - fixed positioning */
+/* Carousel */
+.carousel-container{position:absolute;inset:0;overflow:hidden;}
+.carousel-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease;}
+.carousel-slide.active{opacity:1;}
+.carousel-slide video{width:100%;height:100%;object-fit:cover;}
+.carousel-slide iframe{width:100%;height:100%;border:none;pointer-events:none;}
+
+.ev-overlay{position:absolute;inset:0;z-index:1;}
 .ev-content{
-  position:absolute;
-  top:50%;left:50%;
+  position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);
-  width:60%;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  text-align:center;
-  z-index:2;
+  width:60%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;z-index:2;
 }
-.ev-type{font-size:clamp(9px,1.1vw,13px);letter-spacing:.28em;text-transform:uppercase;color:#D4AF5A;margin-bottom:12px;opacity:.9;}
+.ev-type{letter-spacing:.28em;text-transform:uppercase;color:#D4AF5A;margin-bottom:12px;opacity:.9;}
 .ev-divider{width:52px;height:1px;margin:14px auto;opacity:.6}
-.ev-name{
-  font-family:'Cormorant Garamond',serif;
-  font-size:clamp(28px,4vw,68px);
-  font-weight:300;color:#fff;line-height:1.1;
-  text-shadow:0 2px 40px rgba(0,0,0,.6);
-  width:100%;text-align:center;
-}
-.ev-sub{font-size:clamp(12px,1.4vw,18px);color:rgba(255,255,255,.6);margin-top:16px;letter-spacing:.05em;}
-.ev-time-pill{
-  margin-top:20px;padding:6px 20px;border-radius:30px;
-  background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.15);
-  display:inline-flex;flex-direction:column;align-items:center;
-}
+.ev-name{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 40px rgba(0,0,0,.6);width:100%;text-align:center;}
+.ev-sub{color:rgba(255,255,255,.6);margin-top:16px;letter-spacing:.05em;}
+.ev-time-pill{margin-top:20px;padding:6px 20px;border-radius:30px;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.15);display:inline-flex;flex-direction:column;align-items:center;}
 .ev-time-pill-label{font-size:clamp(8px,0.85vw,11px);letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)}
 .ev-time-pill-val{font-size:clamp(13px,1.5vw,20px);font-weight:500}
 
-/* Corners */
+/* Carousel dots */
+.carousel-dots{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3;}
+.carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .3s;}
+.carousel-dot.active{background:#fff;}
+
 .corner{position:absolute;z-index:3}
 .corner.tl{top:clamp(16px,2.5vw,36px);left:clamp(20px,3vw,44px)}
 .corner.tr{top:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);text-align:right}
@@ -66,11 +54,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 .c-salon-nm{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,26px);color:rgba(255,255,255,.9);font-weight:400;margin-top:2px}
 .c-clock{font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;margin-top:4px}
 
-/* Loading */
 #loading{position:fixed;inset:0;background:#0D0D0B;display:flex;align-items:center;justify-content:center;z-index:99;transition:opacity .5s ease;}
 .spinner{width:32px;height:32px;border:2px solid rgba(184,150,46,.2);border-top-color:#B8962E;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
 .offline-badge{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(163,45,45,.8);color:#fff;font-size:11px;padding:4px 14px;border-radius:20px;display:none;z-index:999;letter-spacing:.05em;}
 </style>
@@ -93,10 +79,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 
 <!-- EVENT SCREEN -->
 <div id="screen-event">
-  <div class="ev-bg" id="ev-bg"></div>
+  <div class="carousel-container" id="carousel-container"></div>
   <div class="ev-overlay" id="ev-overlay"></div>
+  <div class="carousel-dots" id="carousel-dots"></div>
 
-  <div class="corner tl">
+  <div class="corner tl" id="corner-salon">
     <div class="c-salon-lbl">Salón</div>
     <div class="c-salon-nm" id="ev-salon-name">—</div>
   </div>
@@ -110,11 +97,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
   </div>
 
   <div class="ev-content">
-    <div class="ev-type" id="ev-type">—</div>
-    <div class="ev-name" id="ev-name">—</div>
+    <div class="ev-type" id="ev-type"></div>
+    <div class="ev-name" id="ev-name"></div>
     <div class="ev-divider" id="ev-divider"></div>
     <div class="ev-sub" id="ev-sub"></div>
-    <div class="ev-time-pill">
+    <div class="ev-time-pill" id="ev-time-pill">
       <div class="ev-time-pill-label">Hasta las</div>
       <div class="ev-time-pill-val" id="ev-until">—</div>
     </div>
@@ -126,6 +113,113 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 <script>
 const BASE = '/.netlify/functions';
 const slug = location.pathname.split('/').filter(Boolean).pop();
+
+let config = {};
+let carouselSlides = [];
+let carouselIndex = 0;
+let carouselTimer = null;
+
+async function loadConfig() {
+  try {
+    const r = await fetch(`${BASE}/configuracion`);
+    config = await r.json();
+  } catch(e) { config = {}; }
+}
+
+function applyConfig() {
+  const titulo = config.titulo_tamano || '4vw';
+  const subtitulo = config.subtitulo_tamano || '1.4vw';
+  const tipo = config.tipo_tamano || '1.1vw';
+
+  document.getElementById('ev-name').style.fontSize = titulo;
+  document.getElementById('ev-sub').style.fontSize = subtitulo;
+  document.getElementById('ev-type').style.fontSize = tipo;
+
+  document.getElementById('ev-type').style.display = config.tipo_visible === 'false' ? 'none' : 'block';
+  document.getElementById('ev-sub').style.display = config.subtitulo_visible === 'false' ? 'none' : 'block';
+  document.getElementById('ev-time-pill').style.display = config.hora_visible === 'false' ? 'none' : 'inline-flex';
+  document.getElementById('corner-salon').style.display = config.salon_visible === 'false' ? 'none' : 'block';
+}
+
+function buildCarousel(ev, medios) {
+  const container = document.getElementById('carousel-container');
+  const dotsEl = document.getElementById('carousel-dots');
+  container.innerHTML = '';
+  dotsEl.innerHTML = '';
+  carouselSlides = [];
+
+  // Build slides list: medios first, fallback to imagen_url
+  let slides = [];
+  if (medios && medios.length > 0) {
+    slides = medios;
+  } else if (ev.imagen_url) {
+    slides = [{ tipo: 'imagen', url: ev.imagen_url }];
+  }
+
+  if (slides.length === 0) {
+    container.style.background = '#1A1A1A';
+    dotsEl.style.display = 'none';
+    return;
+  }
+
+  slides.forEach((m, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'carousel-slide' + (i === 0 ? ' active' : '');
+
+    if (m.tipo === 'imagen') {
+      slide.style.backgroundImage = `url('${m.url}')`;
+      slide.style.backgroundSize = 'cover';
+      slide.style.backgroundPosition = 'center';
+    } else if (m.tipo === 'video_archivo') {
+      const vid = document.createElement('video');
+      vid.src = m.url;
+      vid.autoplay = true;
+      vid.muted = true;
+      vid.loop = true;
+      vid.playsInline = true;
+      slide.appendChild(vid);
+    } else if (m.tipo === 'video_url') {
+      // Convert YouTube URL to embed
+      let embedUrl = m.url;
+      const ytMatch = m.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+      if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}&controls=0&showinfo=0`;
+      const vimeoMatch = m.url.match(/vimeo\.com\/(\d+)/);
+      if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&background=1`;
+      const iframe = document.createElement('iframe');
+      iframe.src = embedUrl;
+      iframe.allow = 'autoplay; fullscreen';
+      slide.appendChild(iframe);
+    }
+
+    container.appendChild(slide);
+    carouselSlides.push(slide);
+
+    // Dot
+    if (slides.length > 1) {
+      const dot = document.createElement('div');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dotsEl.appendChild(dot);
+    }
+  });
+
+  dotsEl.style.display = slides.length > 1 ? 'flex' : 'none';
+
+  // Start carousel if multiple slides
+  if (slides.length > 1) {
+    const interval = parseInt(config.carrusel_intervalo || '5') * 1000;
+    if (carouselTimer) clearInterval(carouselTimer);
+    carouselTimer = setInterval(() => advanceCarousel(), interval);
+  }
+}
+
+function advanceCarousel() {
+  if (carouselSlides.length <= 1) return;
+  carouselSlides[carouselIndex].classList.remove('active');
+  document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.remove('active');
+  carouselIndex = (carouselIndex + 1) % carouselSlides.length;
+  carouselSlides[carouselIndex].classList.add('active');
+  document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.add('active');
+}
 
 async function fetchStatus() {
   try {
@@ -151,29 +245,37 @@ function renderState(d) {
   const salonName = d.salon || slug;
 
   document.getElementById('idle-salon-name').textContent = salonName;
-  document.getElementById('ev-salon-name').textContent   = salonName;
+  document.getElementById('ev-salon-name').textContent = salonName;
 
   if (ev) {
-    document.getElementById('screen-idle').style.display  = 'none';
+    document.getElementById('screen-idle').style.display = 'none';
     document.getElementById('screen-event').style.display = 'block';
-    const bg = document.getElementById('ev-bg');
-    if (ev.imagen_url) {
-      bg.style.backgroundImage = `url('${ev.imagen_url}')`;
-    } else {
-      bg.style.backgroundImage = 'none';
-      bg.style.background = '#1A1A1A';
-    }
+
     const acento = ev.color_acento || '#B8962E';
-    document.getElementById('ev-type').textContent  = ev.tipo || '';
-    document.getElementById('ev-name').textContent  = ev.nombre || '';
-    document.getElementById('ev-sub').textContent   = ev.subtitulo || '';
+    const opacity = parseFloat(config.overlay_opacidad || '0.6');
+    document.getElementById('ev-overlay').style.background =
+      `linear-gradient(135deg,rgba(0,0,0,${opacity}) 0%,rgba(0,0,0,${opacity*0.4}) 50%,rgba(0,0,0,${opacity}) 100%)`;
+
+    document.getElementById('ev-type').textContent = ev.tipo || '';
+    document.getElementById('ev-name').textContent = ev.nombre || '';
+    document.getElementById('ev-sub').textContent = ev.subtitulo || '';
     document.getElementById('ev-until').textContent = ev.hora_fin ? ev.hora_fin.slice(0,5)+' hrs' : '';
     document.getElementById('ev-until').style.color = acento;
     document.getElementById('ev-divider').style.background = acento;
+
+    applyConfig();
+
+    // Reset carousel
+    carouselIndex = 0;
+    if (carouselTimer) clearInterval(carouselTimer);
+    buildCarousel(ev, ev.medios || []);
+
   } else {
     document.getElementById('screen-event').style.display = 'none';
-    document.getElementById('screen-idle').style.display  = 'flex';
+    document.getElementById('screen-idle').style.display = 'flex';
+    if (carouselTimer) clearInterval(carouselTimer);
   }
+
   hideLoader();
 }
 
@@ -184,10 +286,16 @@ function updateClock() {
   if(ic) ic.textContent = t;
   if(ec) ec.textContent = t;
 }
-updateClock();
-setInterval(updateClock, 15000);
-fetchStatus();
-setInterval(fetchStatus, 30000);
+
+async function init() {
+  await loadConfig();
+  updateClock();
+  setInterval(updateClock, 15000);
+  fetchStatus();
+  setInterval(fetchStatus, 30000);
+}
+
+init();
 </script>
 </body>
 </html>
