@@ -67,12 +67,24 @@ exports.handler = async (event) => {
 
     if (eErr) return { statusCode: 500, headers, body: JSON.stringify({ error: eErr.message }) };
 
+    let evento = eventos?.[0] || null;
+
+    // 3. Si hay evento, buscar sus medios
+    if (evento) {
+      const { data: medios } = await supabase
+        .from('evento_medios')
+        .select('*')
+        .eq('evento_id', evento.id)
+        .order('orden');
+      evento.medios = medios || [];
+    }
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         salon: salon.nombre,
-        evento: eventos?.[0] || null,
+        evento,
         hora_actual: hora,
         fecha_actual: fecha,
       }),
