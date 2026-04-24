@@ -369,14 +369,11 @@ async function openEventForm(id=null){
       <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
         <input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this)">🖼 Agregar imágenes
       </label>
-      <button class="btn-sec" onclick="showVideoForm()">🎬 Agregar video (URL)</button>
+      <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+        <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="addVideo(this)">🎬 Subir video (MP4)
+      </label>
     </div>
-    <div id="video-url-form" style="display:none;margin-top:12px">
-      <div class="form-row">
-        <div><label>URL del video (YouTube, Vimeo u otro)</label><input type="url" id="video-url-input" placeholder="https://youtube.com/watch?v=..."></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn-pri" onclick="addVideoUrl()" style="height:38px">Agregar</button></div>
-      </div>
-    </div>
+    <div id="video-progress" style="display:none;margin-top:10px;font-size:12px;color:var(--muted)">⏳ Subiendo video...</div>
   </div>
   <div class="form-card">
     <div class="form-footer" style="padding-top:0;border-top:none;margin-top:0">
@@ -403,13 +400,20 @@ function renderMediaGrid(){
 }
 
 function removeMedia(i){activeEventMedias.splice(i,1);renderMediaGrid();}
-function showVideoForm(){const f=document.getElementById('video-url-form');f.style.display=f.style.display==='none'?'block':'none';}
-function addVideoUrl(){
-  const url=document.getElementById('video-url-input').value.trim();
-  if(!url)return;
-  activeEventMedias.push({tipo:'video_url',url,orden:activeEventMedias.length,_new:true});
-  document.getElementById('video-url-input').value='';
-  document.getElementById('video-url-form').style.display='none';
+async function addVideo(input){
+  if(!input.files[0])return;
+  const file=input.files[0];
+  const prog=document.getElementById('video-progress');
+  if(prog)prog.style.display='block';
+  await new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      activeEventMedias.push({tipo:'video_archivo',url:e.target.result,_file:file,_base64:e.target.result.split(',')[1],orden:activeEventMedias.length,_new:true,_isVideo:true});
+      resolve();
+    };
+    reader.readAsDataURL(file);
+  });
+  if(prog)prog.style.display='none';
   renderMediaGrid();
 }
 async function addImages(input){
@@ -451,7 +455,12 @@ async function saveEvento(){
     const m=activeEventMedias[i];
     if(!m._new)continue;
     const mp={evento_id:eventoId,tipo:m.tipo,orden:i};
-    if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}
+    if((m.tipo==='imagen'||m.tipo==='video_archivo')&&m._base64){
+      mp.file_base64=m._base64;
+      mp.file_name=m._file?.name||(m.tipo==='video_archivo'?'video.mp4':'imagen.jpg');
+      mp.file_type=m._file?.type||(m.tipo==='video_archivo'?'video/mp4':'image/jpeg');
+      if(m.tipo==='video_archivo')mp.tipo='video_archivo';
+    }
     else mp.url=m.url;
     await fetch(`${BASE}/medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
   }
