@@ -177,8 +177,8 @@ const BASE = '/.netlify/functions';
 
 // Hotel branding (can be overridden via URL param ?hotel=NombreHotel&sub=Tagline)
 const params = new URLSearchParams(location.search);
-const HOTEL_NAME = params.get('hotel') || 'Grand Palacio';
-const HOTEL_SUB  = params.get('sub')   || 'Hotel & Resorts';
+const HOTEL_NAME = params.get('hotel') || 'Marriott Panama';
+const HOTEL_SUB  = params.get('sub')   || '';
 
 // Get salon slug from URL: /salon/imperial → 'imperial'
 const slug = location.pathname.split('/').filter(Boolean).pop();
