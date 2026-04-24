@@ -252,6 +252,8 @@ textarea{resize:none;height:58px}
 
 <script>
 const BASE='/.netlify/functions';
+const SUPA_URL='https://gumnnqpaieooxkvhneqi.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
 let TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='#B8962E',editingEventId=null,editingSalonId=null,activeEventMedias=[];
 
 async function doLogin(){
@@ -404,17 +406,46 @@ async function addVideo(input){
   if(!input.files[0])return;
   const file=input.files[0];
   const prog=document.getElementById('video-progress');
-  if(prog)prog.style.display='block';
-  await new Promise(resolve=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      activeEventMedias.push({tipo:'video_archivo',url:e.target.result,_file:file,_base64:e.target.result.split(',')[1],orden:activeEventMedias.length,_new:true,_isVideo:true});
-      resolve();
+  if(prog){prog.style.display='block';prog.textContent='⏳ Subiendo video... 0%';}
+  
+  try {
+    const filename=`${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const uploadUrl=`${SUPA_URL}/storage/v1/object/imagenes-eventos/${filename}`;
+    
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST', uploadUrl);
+    xhr.setRequestHeader('Authorization',`Bearer ${SUPA_ANON}`);
+    xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+    xhr.setRequestHeader('x-upsert','false');
+    
+    xhr.upload.onprogress=e=>{
+      if(e.lengthComputable&&prog){
+        prog.textContent=`⏳ Subiendo video... ${Math.round(e.loaded/e.total*100)}%`;
+      }
     };
-    reader.readAsDataURL(file);
-  });
-  if(prog)prog.style.display='none';
-  renderMediaGrid();
+    
+    await new Promise((resolve,reject)=>{
+      xhr.onload=()=>{
+        if(xhr.status===200||xhr.status===201){
+          const publicUrl=`${SUPA_URL}/storage/v1/object/public/imagenes-eventos/${filename}`;
+          activeEventMedias.push({tipo:'video_archivo',url:publicUrl,orden:activeEventMedias.length,_new:true,_uploaded:true});
+          resolve();
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText}`));
+        }
+      };
+      xhr.onerror=()=>reject(new Error('Network error during upload'));
+      xhr.send(file);
+    });
+    
+    if(prog)prog.style.display='none';
+    renderMediaGrid();
+    showToast('Video subido correctamente');
+  } catch(err) {
+    if(prog)prog.style.display='none';
+    showToast('Error subiendo video: '+err.message, true);
+    console.error(err);
+  }
 }
 async function addImages(input){
   const files=Array.from(input.files);
@@ -455,13 +486,14 @@ async function saveEvento(){
     const m=activeEventMedias[i];
     if(!m._new)continue;
     const mp={evento_id:eventoId,tipo:m.tipo,orden:i};
-    if((m.tipo==='imagen'||m.tipo==='video_archivo')&&m._base64){
+    if(m.tipo==='imagen'&&m._base64){
       mp.file_base64=m._base64;
-      mp.file_name=m._file?.name||(m.tipo==='video_archivo'?'video.mp4':'imagen.jpg');
-      mp.file_type=m._file?.type||(m.tipo==='video_archivo'?'video/mp4':'image/jpeg');
-      if(m.tipo==='video_archivo')mp.tipo='video_archivo';
+      mp.file_name=m._file?.name||'imagen.jpg';
+      mp.file_type=m._file?.type||'image/jpeg';
+    } else {
+      // video_archivo already uploaded directly to Supabase
+      mp.url=m.url;
     }
-    else mp.url=m.url;
     await fetch(`${BASE}/medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
   }
   showSaving(false);showToast('Evento guardado correctamente');closeEventForm();loadEventos();
