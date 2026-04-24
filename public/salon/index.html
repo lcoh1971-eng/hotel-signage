@@ -180,11 +180,15 @@ const HOTEL_SUB  = params.get('sub')   || '';
 // Get salon slug from URL: /salon/imperial → 'imperial'
 const slug = location.pathname.split('/').filter(Boolean).pop();
 
-// Set hotel name everywhere
-document.getElementById('idle-hotel-name').textContent  = HOTEL_NAME;
-document.getElementById('idle-hotel-tagline').textContent= HOTEL_SUB;
-document.getElementById('ev-hotel-name').textContent     = HOTEL_NAME;
-document.getElementById('ev-hotel-sub').textContent      = HOTEL_SUB;
+// Set hotel name everywhere (check if elements exist first)
+const idleHotel = document.getElementById('idle-hotel-name');
+const idleTagline = document.getElementById('idle-hotel-tagline');
+const evHotel = document.getElementById('ev-hotel-name');
+const evSub = document.getElementById('ev-hotel-sub');
+if (idleHotel) idleHotel.textContent = HOTEL_NAME;
+if (idleTagline) idleTagline.textContent = HOTEL_SUB;
+if (evHotel) evHotel.textContent = HOTEL_NAME;
+if (evSub) evSub.textContent = HOTEL_SUB;
 
 let currentEventId = null;
 
