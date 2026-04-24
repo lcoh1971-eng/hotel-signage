@@ -203,7 +203,9 @@ async function fetchStatus() {
     document.getElementById('offline-badge').style.display = 'block';
   }
 }
-
+// Force hide loader after 3 seconds
+setTimeout(() => { document.getElementById('loading').style.display='none'; }, 3000);
+  
 function renderState(d) {
   const ev = d.evento;
   const salonName = d.salon || slug;
