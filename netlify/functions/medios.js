@@ -50,12 +50,13 @@ exports.handler = async (event) => {
   // POST — agregar medio
   if (event.httpMethod === 'POST') {
     // Si es imagen base64, subir a storage primero
-    if (body.tipo === 'imagen' && body.file_base64) {
+    if ((body.tipo === 'imagen' || body.tipo === 'video_archivo') && body.file_base64) {
       const buffer = Buffer.from(body.file_base64, 'base64');
-      const filename = `${Date.now()}-${(body.file_name || 'imagen').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filename = `${Date.now()}-${(body.file_name || 'archivo').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const contentType = body.file_type || (body.tipo === 'video_archivo' ? 'video/mp4' : 'image/jpeg');
       const { error: upErr } = await supabase.storage
         .from('imagenes-eventos')
-        .upload(filename, buffer, { contentType: body.file_type || 'image/jpeg', upsert: false });
+        .upload(filename, buffer, { contentType, upsert: false });
       if (upErr) return { statusCode: 400, headers, body: JSON.stringify({ error: upErr.message }) };
       const { data: urlData } = supabase.storage.from('imagenes-eventos').getPublicUrl(filename);
       body.url = urlData.publicUrl;
