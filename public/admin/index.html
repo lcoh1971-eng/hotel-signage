@@ -76,6 +76,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 .ic-btn.design-btn:hover{background:rgba(160,33,63,.08)}
 .empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px}
 
+/* FILTER BAR */
+.filter-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-btn{padding:5px 14px;border-radius:20px;border:1.5px solid transparent;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;letter-spacing:.04em;transition:all .15s;background:transparent;}
+.filter-btn.all{border-color:rgba(136,135,128,.3);color:var(--muted);}
+.filter-btn.all.active{background:var(--dark);color:#fff;border-color:var(--dark);}
+.filter-btn.live{border-color:#3B6D11;color:#3B6D11;}
+.filter-btn.live.active{background:#3B6D11;color:#fff;}
+.filter-btn.upcoming{border-color:#B8962E;color:#B8962E;}
+.filter-btn.upcoming.active{background:#B8962E;color:#fff;}
+.filter-btn.done{border-color:#888780;color:#888780;}
+.filter-btn.done.active{background:#888780;color:#fff;}
+.filter-btn.paused-f{border-color:#A0213F;color:#A0213F;}
+.filter-btn.paused-f.active{background:#A0213F;color:#fff;}
+
+/* STATUS FLAGS */
+.ev-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:.04em;}
+.ev-status.live{background:rgba(59,109,17,.15);color:#3B6D11;border:1px solid rgba(59,109,17,.3);}
+.ev-status.upcoming{background:rgba(184,150,46,.15);color:#7A6115;border:1px solid rgba(184,150,46,.3);}
+.ev-status.done{background:rgba(136,135,128,.12);color:#888780;border:1px solid rgba(136,135,128,.25);}
+.ev-status.paused{background:rgba(160,33,63,.12);color:#A0213F;border:1px solid rgba(160,33,63,.25);}
+.ev-card.done{opacity:.65;}
+.ev-card.done:hover{opacity:.85;}
+
 /* FORMS */
 .form-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px}
 .form-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;padding-bottom:14px;border-bottom:.5px solid var(--border)}
@@ -248,6 +271,13 @@ textarea{resize:none;height:58px}
         <button onclick="changeDate(1)">›</button>
         <span style="font-size:12px;color:var(--muted)" id="fecha-label"></span>
       </div>
+      <div class="filter-bar">
+        <button class="filter-btn all active" id="fb-all" onclick="setFilter('all')">Todos</button>
+        <button class="filter-btn live" id="fb-live" onclick="setFilter('live')">🔴 En ejecución</button>
+        <button class="filter-btn upcoming" id="fb-upcoming" onclick="setFilter('upcoming')">🟡 Por ejecutar</button>
+        <button class="filter-btn done" id="fb-done" onclick="setFilter('done')">⚫ Ejecutados</button>
+        <button class="filter-btn paused-f" id="fb-paused" onclick="setFilter('paused')">⏸ Pausados</button>
+      </div>
       <div id="ev-list" class="ev-list"><div class="empty-state">Selecciona un salón para ver sus eventos</div></div>
       <div id="ev-form" style="display:none"></div>
     </div>
@@ -392,6 +422,7 @@ const BASE='/.netlify/functions';
 const SUPA_URL='https://gumnnqpaieooxkvhneqi.supabase.co';
 const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
 let TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='#B8962E',editingEventId=null,editingSalonId=null,activeEventMedias=[];
+let activeFilter='all';
 
 // ── AUTH ──
 async function doLogin(){
@@ -453,23 +484,70 @@ async function loadEventos(){
   renderEventos(await r.json());
 }
 
-function renderEventos(evs){
-  const el=document.getElementById('ev-list');
-  if(!evs.length){el.innerHTML='<div class="empty-state">No hay eventos para este día.</div>';return;}
+function getEventStatus(e){
   const now=new Date();
   const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const today=now.toISOString().slice(0,10);
+  if(e.pausado)return 'paused';
+  if(e.fecha<today||(e.fecha===today&&e.hora_fin.slice(0,5)<cur))return 'done';
+  if(e.fecha===today&&e.hora_inicio.slice(0,5)<=cur&&e.hora_fin.slice(0,5)>=cur)return 'live';
+  return 'upcoming';
+}
 
-  el.innerHTML=evs.map(e=>{
-    const isLive=e.fecha===today&&e.hora_inicio.slice(0,5)<=cur&&e.hora_fin.slice(0,5)>=cur;
-    const isPaused=e.pausado;
-    return `<div class="ev-card ${isPaused?'paused':''}">
+function setFilter(f){
+  activeFilter=f;
+  ['all','live','upcoming','done','paused'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);
+    if(b)b.className=`filter-btn ${k==='paused'?'paused-f':k} ${f===k?'active':''}`;
+  });
+  // re-render with current data
+  loadEventos();
+}
+
+function renderEventos(evs){
+  const el=document.getElementById('ev-list');
+  if(!evs.length){el.innerHTML='<div class="empty-state">No hay eventos para este día.</div>';return;}
+
+  // Count per status for filter badges
+  const counts={all:evs.length,live:0,upcoming:0,done:0,paused:0};
+  evs.forEach(e=>{const s=getEventStatus(e);counts[s]=(counts[s]||0)+1;});
+
+  // Update filter button labels with counts
+  ['all','live','upcoming','done','paused'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);
+    if(!b)return;
+    const labels={all:'Todos',live:'🔴 En ejecución',upcoming:'🟡 Por ejecutar',done:'⚫ Ejecutados',paused:'⏸ Pausados'};
+    const c=counts[k]||0;
+    b.textContent=`${labels[k]}${c>0?' ('+c+')':''}`; 
+  });
+
+  // Filter
+  let filtered=evs;
+  if(activeFilter!=='all')filtered=evs.filter(e=>getEventStatus(e)===activeFilter);
+
+  if(!filtered.length){
+    el.innerHTML='<div class="empty-state">No hay eventos con este estado.</div>';
+    return;
+  }
+
+  const statusConfig={
+    live:{label:'🔴 En ejecución',cls:'live'},
+    upcoming:{label:'🟡 Por ejecutar',cls:'upcoming'},
+    done:{label:'⚫ Ejecutado',cls:'done'},
+    paused:{label:'⏸ Pausado',cls:'paused'},
+  };
+
+  el.innerHTML=filtered.map(e=>{
+    const status=getEventStatus(e);
+    const sc=statusConfig[status];
+    const isDone=status==='done';
+    const isPaused=status==='paused';
+    return `<div class="ev-card ${isDone?'done':''} ${isPaused?'paused':''}" style="border-left:3px solid ${isDone?'#888780':isPaused?'#A0213F':status==='live'?'#3B6D11':'#B8962E'}">
       <div>
         <div class="ev-head">
           <span class="ev-nm">${e.nombre}</span>
           <span class="ev-badge">${e.tipo}</span>
-          ${isLive&&!isPaused?'<span class="ev-badge ev-badge-live">🔴 En vivo</span>':''}
-          ${isPaused?'<span class="ev-badge ev-badge-paused">⏸ Pausado</span>':''}
+          <span class="ev-status ${sc.cls}">${sc.label}</span>
         </div>
         <div class="ev-meta">
           <span>📅 ${formatFecha(e.fecha)}</span>
@@ -477,12 +555,10 @@ function renderEventos(evs){
         </div>
       </div>
       <div class="ev-actions">
-        <button class="ic-btn pause-btn ${isPaused?'paused':''}" onclick="togglePause('${e.id}',${isPaused})" title="${isPaused?'Reanudar':'Pausar'}">
-          ${isPaused?'▶ Reanudar':'⏸ Pausar'}
-        </button>
+        ${!isDone?`<button class="ic-btn pause-btn ${isPaused?'paused':''}" onclick="togglePause('${e.id}',${isPaused})">${isPaused?'▶ Reanudar':'⏸ Pausar'}</button>`:''}
         <button class="ic-btn design-btn" onclick="openDesigner('${e.id}')" title="Editor visual">🎨 Diseñar</button>
         <button class="ic-btn" onclick="window.open('/salon/${activeSalonSlug}','_blank')" title="Ver tableta">👁</button>
-        <button class="ic-btn" onclick="openEventForm('${e.id}')" title="Editar datos">✎</button>
+        ${!isDone?`<button class="ic-btn" onclick="openEventForm('${e.id}')" title="Editar">✎</button>`:''}
         <button class="ic-btn del" onclick="deleteEvento('${e.id}')" title="Eliminar">✕</button>
       </div>
     </div>`;
