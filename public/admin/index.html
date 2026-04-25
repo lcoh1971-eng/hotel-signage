@@ -556,7 +556,7 @@ function renderEventos(evs){
       </div>
       <div class="ev-actions">
         ${!isDone?`<button class="ic-btn pause-btn ${isPaused?'paused':''}" onclick="togglePause('${e.id}',${isPaused})">${isPaused?'▶ Reanudar':'⏸ Pausar'}</button>`:''}
-        <button class="ic-btn design-btn" onclick="openDesigner('${e.id}')" title="Editor visual">🎨 Diseñar</button>
+        ${!isDone?`<button class="ic-btn design-btn" onclick="openDesigner('${e.id}')" title="Editor visual">🎨 Diseñar</button>`:''}
         <button class="ic-btn" onclick="window.open('/salon/${activeSalonSlug}','_blank')" title="Ver tableta">👁</button>
         ${!isDone?`<button class="ic-btn" onclick="openEventForm('${e.id}')" title="Editar">✎</button>`:''}
         <button class="ic-btn del" onclick="deleteEvento('${e.id}')" title="Eliminar">✕</button>
