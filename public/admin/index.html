@@ -209,6 +209,29 @@ textarea{resize:none;height:58px}
 .d-el-item.active{background:rgba(160,33,63,.2);color:#fff;border-left:2px solid var(--marriott);}
 .d-el-item span{font-size:14px;}
 
+/* PREVIEW MODAL */
+#preview-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;}
+.preview-modal-top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:960px;padding:0 0 14px;flex-shrink:0;}
+.preview-modal-title{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.06em;}
+.preview-close{padding:6px 16px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px;border-radius:6px;cursor:pointer;}
+.preview-close:hover{color:#fff;border-color:rgba(255,255,255,.5);}
+.preview-frame{position:relative;width:100%;max-width:960px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);}
+.preview-frame-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.preview-frame-overlay{position:absolute;inset:0;}
+.preview-frame-content{position:absolute;z-index:2;}
+.preview-frame-salon{position:absolute;z-index:3;top:3%;left:3%;}
+.preview-frame-logo{position:absolute;z-index:3;top:3%;right:3%;}
+.preview-frame-clock{position:absolute;z-index:3;bottom:3%;left:3%;font-size:1vw;color:rgba(255,255,255,.5);}
+.pf-salon-lbl{font-size:.7vw;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45);}
+.pf-salon-nm{font-family:'Cormorant Garamond',serif;color:rgba(255,255,255,.9);font-weight:400;}
+.pf-tipo{letter-spacing:.25em;text-transform:uppercase;color:#D4AF5A;}
+.pf-nombre{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.6);}
+.pf-sub{color:rgba(255,255,255,.6);}
+.pf-divider{height:1px;margin:8px 0;}
+.pf-hora{display:inline-flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;margin-top:10px;}
+.pf-hora-lbl{font-size:.6vw;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);}
+.pf-hora-val{font-weight:500;}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;border-left:3px solid var(--marriott);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s}
 .toast.show{transform:translateY(0);opacity:1}
@@ -415,6 +438,38 @@ textarea{resize:none;height:58px}
   </div>
 </div>
 
+<!-- PREVIEW MODAL -->
+<div id="preview-modal">
+  <div class="preview-modal-top">
+    <div class="preview-modal-title" id="preview-modal-title">Vista previa del evento</div>
+    <button class="preview-close" onclick="closePreview()">✕ Cerrar</button>
+  </div>
+  <div class="preview-frame" id="preview-frame">
+    <div class="preview-frame-bg" id="pf-bg"></div>
+    <div class="preview-frame-overlay" id="pf-overlay"></div>
+    <div class="preview-frame-salon" id="pf-salon">
+      <div class="pf-salon-lbl">Salón</div>
+      <div class="pf-salon-nm" id="pf-salon-nm"></div>
+    </div>
+    <div class="preview-frame-logo">
+      <div style="background:white;padding:6px 10px;border-radius:5px;">
+        <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:3vw;width:auto;display:block;">
+      </div>
+    </div>
+    <div class="preview-frame-clock" id="pf-clock"></div>
+    <div class="preview-frame-content" id="pf-content">
+      <div class="pf-tipo" id="pf-tipo"></div>
+      <div class="pf-nombre" id="pf-nombre"></div>
+      <div class="pf-divider" id="pf-divider"></div>
+      <div class="pf-sub" id="pf-sub"></div>
+      <div class="pf-hora" id="pf-hora">
+        <div class="pf-hora-lbl">Hasta las</div>
+        <div class="pf-hora-val" id="pf-hora-val"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -557,7 +612,7 @@ function renderEventos(evs){
       <div class="ev-actions">
         ${!isDone?`<button class="ic-btn pause-btn ${isPaused?'paused':''}" onclick="togglePause('${e.id}',${isPaused})">${isPaused?'▶ Reanudar':'⏸ Pausar'}</button>`:''}
         ${!isDone?`<button class="ic-btn design-btn" onclick="openDesigner('${e.id}')" title="Editor visual">🎨 Diseñar</button>`:''}
-        <button class="ic-btn" onclick="window.open('/salon/${activeSalonSlug}','_blank')" title="Ver tableta">👁</button>
+        ${isDone?`<button class="ic-btn" onclick="openPreview('${e.id}')" title="Vista previa">👁</button>`:`<button class="ic-btn" onclick="window.open('/salon/${activeSalonSlug}','_blank')" title="Ver tableta">👁</button>`}
         ${!isDone?`<button class="ic-btn" onclick="openEventForm('${e.id}')" title="Editar">✎</button>`:''}
         <button class="ic-btn del" onclick="deleteEvento('${e.id}')" title="Eliminar">✕</button>
       </div>
@@ -730,6 +785,70 @@ async function deleteEvento(id){
   if(r.ok){showToast('Evento eliminado');loadEventos();}else showToast('Error',true);
 }
 function closeEventForm(){document.getElementById('ev-form').style.display='none';editingEventId=null;activeEventMedias=[];}
+
+// ── PREVIEW ──
+async function openPreview(eventId){
+  const r=await fetch(`${BASE}/eventos?id=${eventId}`);
+  const ev=await r.json();
+  const d=ev.diseno||{};
+  const acento=ev.color_acento||d.acento||'#B8962E';
+  const salonNombre=allSalones.find(s=>s.id===activeSalonId)?.nombre||'Salón';
+
+  // Background - first image
+  const bg=document.getElementById('pf-bg');
+  const firstImg=ev.medios?.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;
+  else if(ev.imagen_url)bg.style.backgroundImage=`url('${ev.imagen_url}')`;
+  else{bg.style.backgroundImage='none';bg.style.background='#1A1A1A';}
+
+  // Overlay
+  const ov=(parseFloat(d.overlay||60))/100;
+  document.getElementById('pf-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.4}) 50%,rgba(0,0,0,${ov}) 100%)`;
+
+  // Salon
+  document.getElementById('pf-salon-nm').textContent=salonNombre;
+  document.getElementById('pf-salon-nm').style.fontSize=d.salon_nm_size||'1.8vw';
+  document.getElementById('pf-salon').style.display=d.salon_visible===false?'none':'block';
+  document.getElementById('pf-salon').style.top=d.salon_top||'3%';
+  document.getElementById('pf-salon').style.left=d.salon_left||'3%';
+
+  // Content positioning
+  const content=document.getElementById('pf-content');
+  content.style.left=d.content_x||'50%';
+  content.style.top=d.content_y||'50%';
+  content.style.transform=d.content_transform||'translate(-50%,-50%)';
+  content.style.width=d.content_w||'60%';
+  content.style.textAlign=d.content_align||'center';
+
+  // Text
+  document.getElementById('pf-tipo').textContent=ev.tipo||'';
+  document.getElementById('pf-tipo').style.fontSize=d.tipo_size||'1.1vw';
+  document.getElementById('pf-tipo').style.display=d.tipo_visible===false?'none':'block';
+
+  document.getElementById('pf-nombre').textContent=ev.nombre||'';
+  document.getElementById('pf-nombre').style.fontSize=d.titulo_size||'4vw';
+
+  document.getElementById('pf-sub').textContent=ev.subtitulo||'';
+  document.getElementById('pf-sub').style.fontSize=d.sub_size||'1.4vw';
+  document.getElementById('pf-sub').style.display=d.sub_visible===false?'none':'block';
+
+  document.getElementById('pf-divider').style.background=acento;
+  document.getElementById('pf-divider').style.width=d.divider_w||'52px';
+
+  document.getElementById('pf-hora').style.display=d.hora_visible===false?'none':'inline-flex';
+  document.getElementById('pf-hora-val').textContent=ev.hora_fin?ev.hora_fin.slice(0,5)+' hrs':'';
+  document.getElementById('pf-hora-val').style.color=acento;
+
+  // Clock
+  document.getElementById('pf-clock').textContent=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('preview-modal-title').textContent=`Vista previa — ${ev.nombre}`;
+  document.getElementById('preview-modal').style.display='flex';
+}
+
+function closePreview(){
+  document.getElementById('preview-modal').style.display='none';
+}
 
 // ── AGENDA ──
 async function loadAgenda(){
