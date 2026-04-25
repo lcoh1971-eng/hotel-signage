@@ -9,63 +9,47 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:'DM Sans',sans-serif}
-
 #screen-idle{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0D0D0B;}
 .idle-ornament{width:64px;height:1px;background:linear-gradient(to right,transparent,#B8962E,transparent);margin:14px 0}
 .idle-divider{height:30px}
 .idle-salon-label{font-size:clamp(9px,1vw,11px);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.35);}
 .idle-salon-name{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,3vw,48px);color:rgba(255,255,255,.75);font-weight:300;letter-spacing:.06em;margin-top:6px;}
 .idle-clock{font-size:clamp(11px,1.2vw,14px);color:rgba(255,255,255,.25);letter-spacing:.14em;margin-top:20px;}
-
+#screen-paused{position:fixed;inset:0;display:none;background-size:cover;background-position:center;}
+#screen-paused::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.5);}
 #screen-event{position:fixed;inset:0;display:none;}
-
-/* Carousel */
 .carousel-container{position:absolute;inset:0;overflow:hidden;}
 .carousel-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease;}
 .carousel-slide.active{opacity:1;}
 .carousel-slide video{width:100%;height:100%;object-fit:cover;}
-.carousel-slide iframe{width:100%;height:100%;border:none;pointer-events:none;}
-
 .ev-overlay{position:absolute;inset:0;z-index:1;}
-.ev-content{
-  position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:60%;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;text-align:center;z-index:2;
-}
-.ev-type{letter-spacing:.28em;text-transform:uppercase;color:#D4AF5A;margin-bottom:12px;opacity:.9;}
-.ev-divider{width:52px;height:1px;margin:14px auto;opacity:.6}
-.ev-name{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 40px rgba(0,0,0,.6);width:100%;text-align:center;}
-.ev-sub{color:rgba(255,255,255,.6);margin-top:16px;letter-spacing:.05em;}
-.ev-time-pill{margin-top:20px;padding:6px 20px;border-radius:30px;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.15);display:inline-flex;flex-direction:column;align-items:center;}
+.ev-content{position:absolute;z-index:2;}
+.ev-type{letter-spacing:.28em;text-transform:uppercase;color:#D4AF5A;margin-bottom:8px;opacity:.9;}
+.ev-divider{height:1px;margin:10px 0;opacity:.6}
+.ev-name{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 40px rgba(0,0,0,.6);}
+.ev-sub{color:rgba(255,255,255,.6);margin-top:10px;letter-spacing:.05em;}
+.ev-time-pill{margin-top:16px;padding:6px 20px;border-radius:30px;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.15);display:inline-flex;flex-direction:column;align-items:center;}
 .ev-time-pill-label{font-size:clamp(8px,0.85vw,11px);letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)}
 .ev-time-pill-val{font-size:clamp(13px,1.5vw,20px);font-weight:500}
-
-/* Carousel dots */
+.corner-salon{position:absolute;z-index:3;}
+.corner-logo{position:absolute;z-index:3;}
+.corner-clock{position:absolute;z-index:3;}
+.c-salon-lbl{font-size:clamp(8px,0.85vw,11px);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.c-salon-nm{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,26px);color:rgba(255,255,255,.9);font-weight:400;margin-top:2px}
+.c-clock{font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;}
 .carousel-dots{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3;}
 .carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .3s;}
 .carousel-dot.active{background:#fff;}
-
-.corner{position:absolute;z-index:3}
-.corner.tl{top:clamp(16px,2.5vw,36px);left:clamp(20px,3vw,44px)}
-.corner.tr{top:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);text-align:right}
-.corner.bl{bottom:clamp(16px,2.5vw,36px);left:clamp(20px,3vw,44px)}
-.c-salon-lbl{font-size:clamp(8px,0.85vw,11px);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
-.c-salon-nm{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,26px);color:rgba(255,255,255,.9);font-weight:400;margin-top:2px}
-.c-clock{font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;margin-top:4px}
-
 #loading{position:fixed;inset:0;background:#0D0D0B;display:flex;align-items:center;justify-content:center;z-index:99;transition:opacity .5s ease;}
 .spinner{width:32px;height:32px;border:2px solid rgba(184,150,46,.2);border-top-color:#B8962E;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 .offline-badge{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(163,45,45,.8);color:#fff;font-size:11px;padding:4px 14px;border-radius:20px;display:none;z-index:999;letter-spacing:.05em;}
 </style>
 </head>
 <body>
-
 <div id="loading"><div class="spinner"></div></div>
 
-<!-- IDLE SCREEN -->
+<!-- IDLE -->
 <div id="screen-idle">
   <div style="background:white;padding:16px 28px;border-radius:8px;margin-bottom:8px;">
     <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:120px;width:auto;display:block;">
@@ -77,26 +61,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
   <div class="idle-clock" id="idle-clock"></div>
 </div>
 
-<!-- EVENT SCREEN -->
+<!-- PAUSED -->
+<div id="screen-paused"></div>
+
+<!-- EVENT -->
 <div id="screen-event">
   <div class="carousel-container" id="carousel-container"></div>
   <div class="ev-overlay" id="ev-overlay"></div>
   <div class="carousel-dots" id="carousel-dots"></div>
 
-  <div class="corner tl" id="corner-salon">
+  <div class="corner-salon" id="corner-salon">
     <div class="c-salon-lbl">Salón</div>
     <div class="c-salon-nm" id="ev-salon-name">—</div>
   </div>
-  <div class="corner tr">
+  <div class="corner-logo" id="corner-logo">
     <div style="background:white;padding:8px 14px;border-radius:6px;">
       <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:50px;width:auto;display:block;">
     </div>
   </div>
-  <div class="corner bl">
+  <div class="corner-clock" id="corner-clock">
     <div class="c-clock" id="ev-clock"></div>
   </div>
 
-  <div class="ev-content">
+  <div class="ev-content" id="ev-content">
     <div class="ev-type" id="ev-type"></div>
     <div class="ev-name" id="ev-name"></div>
     <div class="ev-divider" id="ev-divider"></div>
@@ -111,190 +98,191 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 <div class="offline-badge" id="offline-badge">Sin conexión · reintentando…</div>
 
 <script>
-const BASE = '/.netlify/functions';
-const slug = location.pathname.split('/').filter(Boolean).pop();
+const BASE='/.netlify/functions';
+const slug=location.pathname.split('/').filter(Boolean).pop();
+let config={};
+let carouselSlides=[];
+let carouselIndex=0;
+let carouselTimer=null;
+let mediaDurations=[];
 
-let config = {};
-let carouselSlides = [];
-let carouselIndex = 0;
-let carouselTimer = null;
-
-async function loadConfig() {
-  try {
-    const r = await fetch(`${BASE}/configuracion`);
-    config = await r.json();
-  } catch(e) { config = {}; }
+async function loadConfig(){
+  try{const r=await fetch(`${BASE}/configuracion`);config=await r.json();}catch(e){config={};}
 }
 
-function applyConfig() {
-  const titulo = config.titulo_tamano || '4vw';
-  const subtitulo = config.subtitulo_tamano || '1.4vw';
-  const tipo = config.tipo_tamano || '1.1vw';
+function applyDesign(diseno){
+  const d=diseno||{};
+  // Content positioning
+  const content=document.getElementById('ev-content');
+  content.style.left=d.content_x||'50%';
+  content.style.top=d.content_y||'50%';
+  content.style.transform=d.content_transform||'translate(-50%,-50%)';
+  content.style.width=d.content_w||'60%';
+  content.style.textAlign=d.content_align||'center';
 
-  document.getElementById('ev-name').style.fontSize = titulo;
-  document.getElementById('ev-sub').style.fontSize = subtitulo;
-  document.getElementById('ev-type').style.fontSize = tipo;
+  // Text sizes
+  document.getElementById('ev-name').style.fontSize=d.titulo_size||(config.titulo_tamano||'4vw');
+  document.getElementById('ev-sub').style.fontSize=d.sub_size||(config.subtitulo_tamano||'1.4vw');
+  document.getElementById('ev-type').style.fontSize=d.tipo_size||(config.tipo_tamano||'1.1vw');
 
-  document.getElementById('ev-type').style.display = config.tipo_visible === 'false' ? 'none' : 'block';
-  document.getElementById('ev-sub').style.display = config.subtitulo_visible === 'false' ? 'none' : 'block';
-  document.getElementById('ev-time-pill').style.display = config.hora_visible === 'false' ? 'none' : 'inline-flex';
-  document.getElementById('corner-salon').style.display = config.salon_visible === 'false' ? 'none' : 'block';
+  // Visibility
+  document.getElementById('ev-type').style.display=(d.tipo_visible===false||config.tipo_visible==='false')?'none':'block';
+  document.getElementById('ev-sub').style.display=(d.sub_visible===false||config.subtitulo_visible==='false')?'none':'block';
+  document.getElementById('ev-time-pill').style.display=(d.hora_visible===false||config.hora_visible==='false')?'none':'inline-flex';
+  document.getElementById('corner-salon').style.display=(d.salon_visible===false||config.salon_visible==='false')?'none':'block';
+
+  // Corner positions
+  const cs=document.getElementById('corner-salon');
+  cs.style.top=d.salon_top||'clamp(16px,2.5vw,36px)';
+  cs.style.left=d.salon_left||'clamp(20px,3vw,44px)';
+
+  const cl=document.getElementById('corner-logo');
+  cl.style.top=d.logo_top||'clamp(16px,2.5vw,36px)';
+  cl.style.right=d.logo_right||'clamp(20px,3vw,44px)';
+  cl.style.left=d.logo_left||'auto';
+
+  const ck=document.getElementById('corner-clock');
+  ck.style.bottom=d.clock_bottom||'clamp(16px,2.5vw,36px)';
+  ck.style.left=d.clock_left||'clamp(20px,3vw,44px)';
+
+  // Divider color
+  const acento=d.acento||'#B8962E';
+  document.getElementById('ev-divider').style.background=acento;
+  document.getElementById('ev-divider').style.width=d.divider_w||'52px';
+  document.getElementById('ev-until').style.color=acento;
 }
 
-function buildCarousel(ev, medios) {
-  const container = document.getElementById('carousel-container');
-  const dotsEl = document.getElementById('carousel-dots');
-  container.innerHTML = '';
-  dotsEl.innerHTML = '';
-  carouselSlides = [];
+function buildCarousel(ev,medios){
+  const container=document.getElementById('carousel-container');
+  const dotsEl=document.getElementById('carousel-dots');
+  container.innerHTML='';dotsEl.innerHTML='';
+  carouselSlides=[];mediaDurations=[];
 
-  // Build slides list: medios first, fallback to imagen_url
-  let slides = [];
-  if (medios && medios.length > 0) {
-    slides = medios;
-  } else if (ev.imagen_url) {
-    slides = [{ tipo: 'imagen', url: ev.imagen_url }];
-  }
+  let slides=medios&&medios.length>0?medios:(ev.imagen_url?[{tipo:'imagen',url:ev.imagen_url,duracion_segundos:5}]:[]);
+  if(!slides.length){container.style.background='#1A1A1A';dotsEl.style.display='none';return;}
 
-  if (slides.length === 0) {
-    container.style.background = '#1A1A1A';
-    dotsEl.style.display = 'none';
-    return;
-  }
-
-  slides.forEach((m, i) => {
-    const slide = document.createElement('div');
-    slide.className = 'carousel-slide' + (i === 0 ? ' active' : '');
-
-    if (m.tipo === 'imagen') {
-      slide.style.backgroundImage = `url('${m.url}')`;
-      slide.style.backgroundSize = 'cover';
-      slide.style.backgroundPosition = 'center';
-    } else if (m.tipo === 'video_archivo') {
-      const vid = document.createElement('video');
-      vid.src = m.url;
-      vid.autoplay = true;
-      vid.muted = true;
-      vid.loop = true;
-      vid.playsInline = true;
+  slides.forEach((m,i)=>{
+    const slide=document.createElement('div');
+    slide.className='carousel-slide'+(i===0?' active':'');
+    if(m.tipo==='imagen'){
+      slide.style.backgroundImage=`url('${m.url}')`;
+      slide.style.backgroundSize='cover';
+      slide.style.backgroundPosition='center';
+    } else if(m.tipo==='video_archivo'){
+      const vid=document.createElement('video');
+      vid.src=m.url;vid.autoplay=true;vid.muted=true;vid.loop=true;vid.playsInline=true;
       slide.appendChild(vid);
-    } else if (m.tipo === 'video_url') {
-      // Convert YouTube URL to embed
-      let embedUrl = m.url;
-      const ytMatch = m.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-      if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}&controls=0&showinfo=0`;
-      const vimeoMatch = m.url.match(/vimeo\.com\/(\d+)/);
-      if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&background=1`;
-      const iframe = document.createElement('iframe');
-      iframe.src = embedUrl;
-      iframe.allow = 'autoplay; fullscreen';
-      slide.appendChild(iframe);
     }
-
     container.appendChild(slide);
     carouselSlides.push(slide);
+    mediaDurations.push((m.duracion_segundos||parseInt(config.carrusel_intervalo||'5'))*1000);
 
-    // Dot
-    if (slides.length > 1) {
-      const dot = document.createElement('div');
-      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    if(slides.length>1){
+      const dot=document.createElement('div');
+      dot.className='carousel-dot'+(i===0?' active':'');
       dotsEl.appendChild(dot);
     }
   });
 
-  dotsEl.style.display = slides.length > 1 ? 'flex' : 'none';
-
-  // Start carousel if multiple slides
-  if (slides.length > 1) {
-    const interval = parseInt(config.carrusel_intervalo || '5') * 1000;
-    if (carouselTimer) clearInterval(carouselTimer);
-    carouselTimer = setInterval(() => advanceCarousel(), interval);
-  }
+  dotsEl.style.display=slides.length>1?'flex':'none';
+  if(slides.length>1)scheduleNext(0);
 }
 
-function advanceCarousel() {
-  if (carouselSlides.length <= 1) return;
-  carouselSlides[carouselIndex].classList.remove('active');
-  document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.remove('active');
-  carouselIndex = (carouselIndex + 1) % carouselSlides.length;
-  carouselSlides[carouselIndex].classList.add('active');
-  document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.add('active');
+function scheduleNext(idx){
+  if(carouselTimer)clearTimeout(carouselTimer);
+  const dur=mediaDurations[idx]||5000;
+  carouselTimer=setTimeout(()=>{
+    if(carouselSlides.length<=1)return;
+    carouselSlides[carouselIndex].classList.remove('active');
+    document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.remove('active');
+    carouselIndex=(carouselIndex+1)%carouselSlides.length;
+    carouselSlides[carouselIndex].classList.add('active');
+    document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.add('active');
+    scheduleNext(carouselIndex);
+  },dur);
 }
 
-async function fetchStatus() {
-  try {
-    const r = await fetch(`${BASE}/eventos?salon_slug=${slug}`);
-    if (!r.ok) throw new Error('API error');
-    const d = await r.json();
-    document.getElementById('offline-badge').style.display = 'none';
+async function fetchStatus(){
+  try{
+    const r=await fetch(`${BASE}/eventos?salon_slug=${slug}`);
+    if(!r.ok)throw new Error('API error');
+    const d=await r.json();
+    document.getElementById('offline-badge').style.display='none';
     renderState(d);
-  } catch(e) {
-    document.getElementById('offline-badge').style.display = 'block';
+  }catch(e){
+    document.getElementById('offline-badge').style.display='block';
     hideLoader();
   }
 }
 
-function hideLoader() {
-  const loader = document.getElementById('loading');
-  loader.style.opacity = '0';
-  setTimeout(()=> loader.style.display='none', 500);
+function hideLoader(){
+  const l=document.getElementById('loading');
+  l.style.opacity='0';
+  setTimeout(()=>l.style.display='none',500);
 }
 
-function renderState(d) {
-  const ev = d.evento;
-  const salonName = d.salon || slug;
+function renderState(d){
+  const ev=d.evento;
+  const salonName=d.salon||slug;
+  document.getElementById('idle-salon-name').textContent=salonName;
+  document.getElementById('ev-salon-name').textContent=salonName;
 
-  document.getElementById('idle-salon-name').textContent = salonName;
-  document.getElementById('ev-salon-name').textContent = salonName;
+  if(ev){
+    // Paused mode
+    if(ev.pausado){
+      document.getElementById('screen-idle').style.display='none';
+      document.getElementById('screen-event').style.display='none';
+      const paused=document.getElementById('screen-paused');
+      paused.style.display='block';
+      // Show first media as frozen background
+      const firstImg=ev.medios?.find(m=>m.tipo==='imagen');
+      if(firstImg)paused.style.backgroundImage=`url('${firstImg.url}')`;
+      else if(ev.imagen_url)paused.style.backgroundImage=`url('${ev.imagen_url}')`;
+      if(carouselTimer)clearTimeout(carouselTimer);
+    } else {
+      document.getElementById('screen-paused').style.display='none';
+      document.getElementById('screen-idle').style.display='none';
+      document.getElementById('screen-event').style.display='block';
 
-  if (ev) {
-    document.getElementById('screen-idle').style.display = 'none';
-    document.getElementById('screen-event').style.display = 'block';
+      const opacity=parseFloat(config.overlay_opacidad||'0.6');
+      document.getElementById('ev-overlay').style.background=
+        `linear-gradient(135deg,rgba(0,0,0,${opacity}) 0%,rgba(0,0,0,${opacity*0.4}) 50%,rgba(0,0,0,${opacity}) 100%)`;
 
-    const acento = ev.color_acento || '#B8962E';
-    const opacity = parseFloat(config.overlay_opacidad || '0.6');
-    document.getElementById('ev-overlay').style.background =
-      `linear-gradient(135deg,rgba(0,0,0,${opacity}) 0%,rgba(0,0,0,${opacity*0.4}) 50%,rgba(0,0,0,${opacity}) 100%)`;
+      document.getElementById('ev-type').textContent=ev.tipo||'';
+      document.getElementById('ev-name').textContent=ev.nombre||'';
+      document.getElementById('ev-sub').textContent=ev.subtitulo||'';
+      document.getElementById('ev-until').textContent=ev.hora_fin?ev.hora_fin.slice(0,5)+' hrs':'';
 
-    document.getElementById('ev-type').textContent = ev.tipo || '';
-    document.getElementById('ev-name').textContent = ev.nombre || '';
-    document.getElementById('ev-sub').textContent = ev.subtitulo || '';
-    document.getElementById('ev-until').textContent = ev.hora_fin ? ev.hora_fin.slice(0,5)+' hrs' : '';
-    document.getElementById('ev-until').style.color = acento;
-    document.getElementById('ev-divider').style.background = acento;
+      applyDesign(ev.diseno||{});
 
-    applyConfig();
-
-    // Reset carousel
-    carouselIndex = 0;
-    if (carouselTimer) clearInterval(carouselTimer);
-    buildCarousel(ev, ev.medios || []);
-
+      carouselIndex=0;
+      if(carouselTimer)clearTimeout(carouselTimer);
+      buildCarousel(ev,ev.medios||[]);
+    }
   } else {
-    document.getElementById('screen-event').style.display = 'none';
-    document.getElementById('screen-idle').style.display = 'flex';
-    if (carouselTimer) clearInterval(carouselTimer);
+    document.getElementById('screen-event').style.display='none';
+    document.getElementById('screen-paused').style.display='none';
+    document.getElementById('screen-idle').style.display='flex';
+    if(carouselTimer)clearTimeout(carouselTimer);
   }
-
   hideLoader();
 }
 
-function updateClock() {
-  const t = new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
-  const ic = document.getElementById('idle-clock');
-  const ec = document.getElementById('ev-clock');
-  if(ic) ic.textContent = t;
-  if(ec) ec.textContent = t;
+function updateClock(){
+  const t=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+  const ic=document.getElementById('idle-clock');
+  const ec=document.getElementById('ev-clock');
+  if(ic)ic.textContent=t;
+  if(ec)ec.textContent=t;
 }
 
-async function init() {
+async function init(){
   await loadConfig();
   updateClock();
-  setInterval(updateClock, 15000);
+  setInterval(updateClock,15000);
   fetchStatus();
-  setInterval(fetchStatus, 30000);
+  setInterval(fetchStatus,30000);
 }
-
 init();
 </script>
 </body>
