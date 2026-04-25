@@ -1,10 +1,4 @@
 // netlify/functions/eventos.js
-// GET  /api/eventos?salon_slug=imperial   → evento activo ahora
-// GET  /api/eventos?salon_id=xxx&fecha=2026-04-23  → todos del día
-// POST /api/eventos        → crea evento
-// PUT  /api/eventos?id=xxx → edita evento
-// DELETE /api/eventos?id=xxx → elimina evento
-
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -19,7 +13,6 @@ function authorized(event) {
 }
 
 function nowPanama() {
-  // Panama = UTC-5 (sin horario de verano)
   const utc = new Date();
   utc.setHours(utc.getHours() - 5);
   return utc;
@@ -37,91 +30,63 @@ exports.handler = async (event) => {
 
   const params = event.queryStringParameters || {};
 
-  // ── GET: evento activo en este momento para una tableta ──
+  // GET: evento activo para tableta
   if (event.httpMethod === 'GET' && params.salon_slug) {
     const now = nowPanama();
     const fecha = now.toISOString().slice(0, 10);
-    const hora  = now.toTimeString().slice(0, 5); // HH:MM
+    const hora = now.toTimeString().slice(0, 5);
 
-    // 1. Obtener salon_id desde slug
     const { data: salon, error: sErr } = await supabase
-      .from('salones')
-      .select('id, nombre')
-      .eq('slug', params.salon_slug)
-      .single();
+      .from('salones').select('id, nombre').eq('slug', params.salon_slug).single();
+    if (sErr || !salon) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Salón no encontrado' }) };
 
-    if (sErr || !salon) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Salón no encontrado' }) };
-    }
-
-    // 2. Buscar evento activo ahora
     const { data: eventos, error: eErr } = await supabase
-      .from('eventos')
-      .select('*')
-      .eq('salon_id', salon.id)
-      .eq('fecha', fecha)
-      .lte('hora_inicio', hora)
-      .gte('hora_fin', hora)
-      .order('hora_inicio')
-      .limit(1);
-
+      .from('eventos').select('*')
+      .eq('salon_id', salon.id).eq('fecha', fecha)
+      .lte('hora_inicio', hora).gte('hora_fin', hora)
+      .order('hora_inicio').limit(1);
     if (eErr) return { statusCode: 500, headers, body: JSON.stringify({ error: eErr.message }) };
 
     let evento = eventos?.[0] || null;
-
-    // 3. Si hay evento, buscar sus medios
     if (evento) {
       const { data: medios } = await supabase
-        .from('evento_medios')
-        .select('*')
-        .eq('evento_id', evento.id)
-        .order('orden');
+        .from('evento_medios').select('*').eq('evento_id', evento.id).order('orden');
       evento.medios = medios || [];
     }
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        salon: salon.nombre,
-        evento,
-        hora_actual: hora,
-        fecha_actual: fecha,
-      }),
-    };
+    return { statusCode: 200, headers, body: JSON.stringify({ salon: salon.nombre, evento, hora_actual: hora, fecha_actual: fecha }) };
   }
 
-  // ── GET: todos los eventos de un salón en una fecha ──
+  // GET: todos los eventos de un salón en una fecha
   if (event.httpMethod === 'GET' && params.salon_id) {
     const fecha = params.fecha || nowPanama().toISOString().slice(0, 10);
     const { data, error } = await supabase
-      .from('eventos')
-      .select('*')
-      .eq('salon_id', params.salon_id)
-      .eq('fecha', fecha)
-      .order('hora_inicio');
+      .from('eventos').select('*').eq('salon_id', params.salon_id).eq('fecha', fecha).order('hora_inicio');
     if (error) return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     return { statusCode: 200, headers, body: JSON.stringify(data) };
   }
 
-  // ── GET: todos los eventos de todas las salas en una fecha (agenda) ──
+  // GET: todos los eventos de una fecha (agenda)
   if (event.httpMethod === 'GET' && params.fecha) {
     const { data, error } = await supabase
-      .from('eventos')
-      .select('*, salones(nombre,slug)')
-      .eq('fecha', params.fecha)
-      .order('hora_inicio');
+      .from('eventos').select('*, salones(nombre,slug)').eq('fecha', params.fecha).order('hora_inicio');
     if (error) return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     return { statusCode: 200, headers, body: JSON.stringify(data) };
   }
 
-  // Mutaciones — requieren autenticación
-  if (!authorized(event)) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
+  // GET: un evento específico con sus medios
+  if (event.httpMethod === 'GET' && params.id) {
+    const { data, error } = await supabase.from('eventos').select('*').eq('id', params.id).single();
+    if (error) return { statusCode: 404, headers, body: JSON.stringify({ error: error.message }) };
+    const { data: medios } = await supabase.from('evento_medios').select('*').eq('evento_id', params.id).order('orden');
+    data.medios = medios || [];
+    return { statusCode: 200, headers, body: JSON.stringify(data) };
   }
 
+  if (!authorized(event)) return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
+
   const body = JSON.parse(event.body || '{}');
-  const id   = params.id;
+  const id = params.id;
 
   if (event.httpMethod === 'POST') {
     const { data, error } = await supabase.from('eventos').insert([body]).select().single();
