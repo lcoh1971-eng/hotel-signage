@@ -800,6 +800,8 @@ async function openEventForm(id=null){
     ]);
     ev=await evR.json();
     activeEventMedias=await medR.json();
+    // Store original IDs to detect deletions on save
+    window._originalEventMediaIds=activeEventMedias.map(m=>m.id).filter(Boolean);
   }
   const colors=['#B8962E','#D4537E','#378ADD','#1D9E75','#9B59B6','#E74C3C','#FFFFFF'];
   selectedColor=ev?.color_acento||'#B8962E';
@@ -949,6 +951,14 @@ async function saveEvento(){
   if(!r.ok){showToast(d.error||'Error al guardar',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
   const eventoId=d.id;
 
+  // Delete removed event medios
+  if(editingEventId&&window._originalEventMediaIds&&window._originalEventMediaIds.length){
+    const currentIds=activeEventMedias.filter(m=>m.id).map(m=>m.id);
+    const deletedIds=window._originalEventMediaIds.filter(id=>!currentIds.includes(id));
+    for(const id of deletedIds){
+      await fetch(`${BASE}/medios?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+    }
+  }
   // Update duration of existing medios that changed
   for(let i=0;i<activeEventMedias.length;i++){
     const m=activeEventMedias[i];
@@ -971,6 +981,7 @@ async function saveEvento(){
     }
   }
 
+  window._originalEventMediaIds=null;
   showSaving(false);showToast('Evento guardado correctamente');closeEventForm();loadEventos();
 }
 
@@ -1449,6 +1460,8 @@ async function openUpsellingForm(id=null){
     const r=await fetch(`${BASE}/upselling?id=${id}`,{headers:{'x-admin-token':TOKEN}});
     camp=await r.json();
     upMedias=camp.upselling_medios||[];
+    // Store original IDs to detect deletions on save
+    window._originalUpMediaIds=upMedias.map(m=>m.id).filter(Boolean);
     selectedSalons=camp.upselling_salones?.map(s=>s.salon_id)||[];
     // Load saved design
     window._currentUpDesign=camp.diseno||{};
