@@ -306,21 +306,66 @@ function startIdleCarousel(){
   upSlideTimer=setTimeout(()=>showPromoSlide(0), IDLE_SHOW_SECONDS*1000);
 }
 
+function buildQR(url, size=120){
+  // Generate QR using Google Charts API
+  const encoded=encodeURIComponent(url);
+  return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}" style="width:${size}px;height:${size}px;display:block;border-radius:6px;">`;
+}
+
 function showPromoSlide(idx){
   if(!upCampaign||!upCampaign.upselling_medios||!upCampaign.upselling_medios.length)return;
   const medios=upCampaign.upselling_medios;
   const m=medios[idx];
+  const d=upCampaign.diseno||{};
   showingPromo=true;
 
   const idle=document.getElementById('screen-idle');
   const promo=document.getElementById('screen-promo');
 
-  // Build promo content
+  // Background media
+  let bgHtml='';
   if(m.tipo==='imagen'){
-    promo.innerHTML=`<div style="position:absolute;inset:0;background:url('${m.url}') center/cover no-repeat;"></div>`;
+    bgHtml=`<div style="position:absolute;inset:0;background:url('${m.url}') center/cover no-repeat;"></div>`;
   } else if(m.tipo==='video_archivo'){
-    promo.innerHTML=`<video src="${m.url}" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"></video>`;
+    bgHtml=`<video src="${m.url}" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"></video>`;
   }
+
+  // Overlay
+  const ov=parseFloat(d.overlay||50)/100;
+  const overlayHtml=`<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%);z-index:1;"></div>`;
+
+  // Logo (always top right)
+  const logoHtml=`<div style="position:absolute;top:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);z-index:3;">
+    <div style="background:white;padding:8px 14px;border-radius:6px;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${d.logo_size||50}px;width:auto;display:block;">
+    </div>
+  </div>`;
+
+  // Text content
+  const titulo=m.titulo||d.titulo_global||'';
+  const subtitulo=m.subtitulo||d.subtitulo_global||'';
+  const textHtml=titulo||subtitulo?`<div style="position:absolute;left:${d.text_x||'50%'};top:${d.text_y||'75%'};transform:translate(-50%,-50%);width:${d.text_w||'70%'};text-align:${d.text_align||'center'};z-index:2;">
+    ${titulo?`<div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;margin-bottom:8px;">${titulo}</div>`:''}
+    ${subtitulo?`<div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);letter-spacing:.04em;">${subtitulo}</div>`:''}
+  </div>`:'';
+
+  // QR code
+  const qrUrl=upCampaign.qr_url||'';
+  const qrHtml=qrUrl?`<div style="position:absolute;left:${d.qr_x||'3%'};bottom:${d.qr_y||'3%'};z-index:3;">
+    <div style="background:white;padding:8px;border-radius:8px;display:inline-block;">
+      ${buildQR(qrUrl, d.qr_size||100)}
+      ${upCampaign.qr_texto?`<div style="font-size:9px;text-align:center;color:#333;margin-top:4px;font-family:sans-serif;">${upCampaign.qr_texto}</div>`:''}
+    </div>
+  </div>`:'';
+
+  // Clock
+  const clockHtml=`<div style="position:absolute;bottom:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);z-index:3;font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;" id="promo-clock"></div>`;
+
+  promo.innerHTML=bgHtml+overlayHtml+logoHtml+textHtml+qrHtml+clockHtml;
+
+  // Update promo clock
+  const pc=promo.querySelector('#promo-clock');
+  if(pc)pc.textContent=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
 
   idle.style.opacity='0';
   promo.style.display='block';
@@ -330,14 +375,12 @@ function showPromoSlide(idx){
   upSlideTimer=setTimeout(()=>{
     const next=(idx+1)%medios.length;
     if(next===0){
-      // Back to default screen
       showingPromo=false;
       promo.style.opacity='0';
       setTimeout(()=>{
         promo.style.display='none';
         promo.innerHTML='';
         idle.style.opacity='1';
-        // Schedule next promo cycle
         startIdleCarousel();
       },600);
     } else {
