@@ -349,15 +349,12 @@ function showPromoSlide(idx){
   // ── Text ──
   const titulo=d.titulo_global||'';
   const subtitulo=d.subtitulo_global||'';
-  const textX=d.text_x||'50%';
-  const textY=d.text_y||'75%';
-  // Use translate only if position is still centered default
-  const textTransform=(d.text_transform&&d.text_transform!=='none')?d.text_transform:(textX==='50%'?'translate(-50%,-50%)':'none');
-  const textW=d.text_w||'70%';
-  const textAlign=d.text_align||'center';
+  const textX=d.text_x||'10%';
+  const textY=d.text_y||'65%';
+  const textW=d.text_w||'75%';
   const tituloSize=d.titulo_size||'3.5vw';
   const subSize=d.sub_size||'1.3vw';
-  const textHtml=(titulo||subtitulo)?`<div style="position:absolute;left:${textX};top:${textY};transform:${textTransform};width:${textW};text-align:${textAlign};z-index:2;">
+  const textHtml=(titulo||subtitulo)?`<div style="position:absolute;left:${textX};top:${textY};transform:none;width:${textW};z-index:2;">
     ${titulo?`<div style="font-family:'Cormorant Garamond',serif;font-size:${tituloSize};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;margin-bottom:8px;">${titulo}</div>`:''}
     ${subtitulo?`<div style="font-family:'DM Sans',sans-serif;font-size:${subSize};color:rgba(255,255,255,.75);letter-spacing:.04em;">${subtitulo}</div>`:''}
   </div>`:'';
