@@ -337,8 +337,8 @@ function showPromoSlide(idx){
 
   // ── Logo ──
   const logoTop=d.logo_top||'3%';
-  const logoRight=d.logo_right||'3%';
-  const logoLeft=d.logo_left||'auto';
+  const logoLeft=d.logo_left&&d.logo_left!=='auto'?d.logo_left:'auto';
+  const logoRight=logoLeft==='auto'?(d.logo_right||'3%'):'auto';
   const logoSize=d.logo_size||50;
   const logoHtml=`<div style="position:absolute;top:${logoTop};right:${logoRight};left:${logoLeft};z-index:3;">
     <div style="background:white;padding:8px 14px;border-radius:6px;display:inline-block;">
@@ -351,7 +351,8 @@ function showPromoSlide(idx){
   const subtitulo=d.subtitulo_global||'';
   const textX=d.text_x||'50%';
   const textY=d.text_y||'75%';
-  const textTransform=d.text_transform||'translate(-50%,-50%)';
+  // Use translate only if position is still centered default
+  const textTransform=(d.text_transform&&d.text_transform!=='none')?d.text_transform:(textX==='50%'?'translate(-50%,-50%)':'none');
   const textW=d.text_w||'70%';
   const textAlign=d.text_align||'center';
   const tituloSize=d.titulo_size||'3.5vw';
@@ -366,8 +367,9 @@ function showPromoSlide(idx){
   const qrTxt=d.qr_texto||upCampaign.qr_texto||'';
   const qrSize=d.qr_size||100;
   const qrX=d.qr_x||'3%';
-  const qrY=d.qr_y||'3%';
-  const qrHtml=qrUrl?`<div style="position:absolute;left:${qrX};bottom:auto;top:${qrY};z-index:3;">
+  const qrTop=d.qr_y_top||'auto';
+  const qrBottom=d.qr_y_bottom||'3%';
+  const qrHtml=qrUrl?`<div style="position:absolute;left:${qrX};top:${qrTop};bottom:${qrBottom};z-index:3;">
     <div style="background:white;padding:8px;border-radius:8px;display:inline-block;">
       ${buildQR(qrUrl,qrSize)}
       ${qrTxt?`<div style="font-size:9px;text-align:center;color:#333;margin-top:4px;font-family:sans-serif;max-width:${qrSize}px;">${qrTxt}</div>`:''}
