@@ -606,6 +606,14 @@ textarea{resize:none;height:58px}
           <input type="range" min="0" max="90" step="5" value="50" id="up-dp-overlay" oninput="updateUpOverlay()">
         </div>
       </div>
+      <div class="up-d-section">
+        <div class="up-d-section-title">Pantalla default (logo + salón)</div>
+        <p style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px">Tiempo que se muestra la pantalla con el logo y nombre del salón antes de pasar a los slides promocionales.</p>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Duración pantalla default</label><span class="up-d-prop-val" id="up-dpv-default-dur">8s</span></div>
+          <input type="range" min="2" max="60" step="1" value="8" id="up-dp-default-dur" oninput="document.getElementById('up-dpv-default-dur').textContent=this.value+'s';upDesign.default_dur=parseInt(this.value);">
+        </div>
+      </div>
 
       <div class="up-d-section" id="up-props-qr" style="display:none">
         <div class="up-d-section-title">Código QR</div>
@@ -1436,11 +1444,16 @@ async function openUpsellingForm(id=null){
   upEditingId=id;upMedias=[];
   let camp=null;
   let selectedSalons=[];
+  window._currentUpDesign=null;
   if(id){
     const r=await fetch(`${BASE}/upselling?id=${id}`,{headers:{'x-admin-token':TOKEN}});
     camp=await r.json();
     upMedias=camp.upselling_medios||[];
     selectedSalons=camp.upselling_salones?.map(s=>s.salon_id)||[];
+    // Load saved design
+    window._currentUpDesign=camp.diseno||{};
+    if(camp.qr_url)window._currentUpDesign.qr_url=camp.qr_url;
+    if(camp.qr_texto)window._currentUpDesign.qr_texto=camp.qr_texto;
   }
   const aplica=camp?.aplica_todos!==false;
 
@@ -1512,32 +1525,25 @@ function renderUpTimeline(){
   if(!list)return;
   if(!upMedias.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">Sin slides. Agrega imágenes o videos.</div>';return;}
   list.innerHTML=upMedias.map((m,i)=>`
-    <div class="up-tl-item" style="display:flex;flex-direction:column;gap:6px;padding:10px;">
-      <div style="display:grid;grid-template-columns:56px 1fr auto auto auto;gap:8px;align-items:center;">
-        ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:
-          `<div class="up-tl-thumb-vid">▶</div>`}
-        <div>
-          <div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,28)}</div>
-          <div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div>
-        </div>
-        <div class="up-tl-dur">
-          <input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)">
-          <span>seg</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:2px">
-          <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},-1)" ${i===0?'disabled':''}>↑</button>
-          <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},1)" ${i===upMedias.length-1?'disabled':''}>↓</button>
-        </div>
-        <button class="ic-btn del" onclick="upRemoveMedia(${i})" title="Quitar">✕</button>
+    <div class="up-tl-item" style="display:grid;grid-template-columns:56px 1fr auto auto auto;gap:8px;align-items:center;padding:10px;">
+      ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:
+        `<div class="up-tl-thumb-vid">▶</div>`}
+      <div>
+        <div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,28)}</div>
+        <div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <input type="text" placeholder="Título de este slide (opcional)" value="${m.titulo||''}" onchange="upSetField(${i},'titulo',this.value)" style="font-size:11px;padding:5px 8px;">
-        <input type="text" placeholder="Subtítulo de este slide (opcional)" value="${m.subtitulo||''}" onchange="upSetField(${i},'subtitulo',this.value)" style="font-size:11px;padding:5px 8px;">
+      <div class="up-tl-dur">
+        <input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)">
+        <span>seg</span>
       </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},1)" ${i===upMedias.length-1?'disabled':''}>↓</button>
+      </div>
+      <button class="ic-btn del" onclick="upRemoveMedia(${i})" title="Quitar">✕</button>
     </div>`).join('');
 }
 
-function upSetField(i,field,val){upMedias[i][field]=val;}
 function upMoveMedia(i,dir){
   const j=i+dir;
   if(j<0||j>=upMedias.length)return;
@@ -1604,9 +1610,8 @@ async function saveCampaign(){
   const activo=document.getElementById('up-activo').checked;
   const salon_ids=aplica_todos?[]:Array.from(document.querySelectorAll('#up-salon-checks input:checked')).map(i=>i.value);
 
-  const design=window._tempUpDesign||upDesign||{};
+  const design=window._currentUpDesign||{};
   const payload={nombre,activo,aplica_todos,salon_ids,diseno:design,qr_url:design.qr_url||'',qr_texto:design.qr_texto||''};
-  window._tempUpDesign=null;
   const url=upEditingId?`${BASE}/upselling?id=${upEditingId}`:`${BASE}/upselling`;
   const method=upEditingId?'PUT':'POST';
   const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
@@ -1660,15 +1665,17 @@ let upDragState=null;
 let upCanvasScale=1;
 
 function openUpDesigner(){
-  // Load existing design from current campaign or defaults
+  // Load saved design from campaign or temp or defaults
+  const savedDesign=window._currentUpDesign||{};
   upDesign=Object.assign({
-    logo_size:50,logo_top:'3%',logo_right:'3%',
+    logo_size:50,logo_top:'3%',logo_right:'3%',logo_left:'auto',
     text_x:'50%',text_y:'75%',text_w:'70%',text_align:'center',
     titulo_size:'3.5vw',sub_size:'1.3vw',
     titulo_global:'',subtitulo_global:'',
     qr_url:'',qr_texto:'',qr_size:100,qr_x:'3%',qr_y:'3%',
     overlay:50,
-  },{});
+    default_dur:8,
+  },savedDesign);
 
   document.getElementById('up-designer-title').textContent=`Editor Visual — ${document.getElementById('up-nombre')?.value||'Upselling'}`;
   document.getElementById('up-designer-overlay').style.display='flex';
@@ -1840,16 +1847,16 @@ function endUpDrag(e){
 }
 
 async function saveUpDesign(){
-  // Save design to current campaign if editing, or store in temp
+  // Always persist design to window._currentUpDesign so it survives re-open
+  window._currentUpDesign={...upDesign};
   if(upEditingId){
-    await fetch(`${BASE}/upselling?id=${upEditingId}`,{
+    const r=await fetch(`${BASE}/upselling?id=${upEditingId}`,{
       method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
-      body:JSON.stringify({diseno:upDesign,qr_url:upDesign.qr_url,qr_texto:upDesign.qr_texto})
+      body:JSON.stringify({diseno:upDesign,qr_url:upDesign.qr_url||'',qr_texto:upDesign.qr_texto||''})
     });
-    showToast('Diseño guardado');
+    if(r.ok)showToast('Diseño guardado. Tabletas se actualizan en 30 segundos.');
+    else showToast('Error al guardar diseño',true);
   } else {
-    // Store temporarily until campaign is saved
-    window._tempUpDesign=upDesign;
     showToast('Diseño listo. Guarda la campaña para aplicarlo.');
   }
   closeUpDesigner();
