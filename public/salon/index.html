@@ -175,7 +175,8 @@ function buildCarousel(ev,medios){
     }
     container.appendChild(slide);
     carouselSlides.push(slide);
-    mediaDurations.push((m.duracion_segundos||parseInt(config.carrusel_intervalo||'5'))*1000);
+    const durSec=m.duracion_segundos||parseInt(config.carrusel_intervalo||'5');
+    mediaDurations.push(durSec*1000);
 
     if(slides.length>1){
       const dot=document.createElement('div');
@@ -190,9 +191,10 @@ function buildCarousel(ev,medios){
 
 function scheduleNext(idx){
   if(carouselTimer)clearTimeout(carouselTimer);
-  const dur=mediaDurations[idx]||5000;
+  if(carouselSlides.length<=1)return;
+  // Use individual duration for this slide, fallback to global config
+  const dur=mediaDurations[idx]||parseInt(config.carrusel_intervalo||'5')*1000;
   carouselTimer=setTimeout(()=>{
-    if(carouselSlides.length<=1)return;
     carouselSlides[carouselIndex].classList.remove('active');
     document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.remove('active');
     carouselIndex=(carouselIndex+1)%carouselSlides.length;
