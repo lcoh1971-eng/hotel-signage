@@ -632,23 +632,32 @@ async function togglePause(id,currentlyPaused){
 
 async function openEventForm(id=null){
   editingEventId=id;activeEventMedias=[];
-  if(id){const r=await fetch(`${BASE}/medios?evento_id=${id}`);activeEventMedias=await r.json();}
+  let ev=null;
+  if(id){
+    // Load full event data including medios
+    const [evR, medR] = await Promise.all([
+      fetch(`${BASE}/eventos?id=${id}`),
+      fetch(`${BASE}/medios?evento_id=${id}`)
+    ]);
+    ev=await evR.json();
+    activeEventMedias=await medR.json();
+  }
   const colors=['#B8962E','#D4537E','#378ADD','#1D9E75','#9B59B6','#E74C3C','#FFFFFF'];
-  selectedColor='#B8962E';
+  selectedColor=ev?.color_acento||'#B8962E';
 
   document.getElementById('ev-form').innerHTML=`
   <div class="form-card">
     <div class="form-title">${id?'Editar datos del evento':'Nuevo evento'}</div>
     <div class="form-row">
-      <div><label>Nombre del evento</label><input type="text" id="f-nombre" placeholder="Ej. Boda Pérez–González"></div>
-      <div><label>Tipo</label><select id="f-tipo">${['Boda','Corporativo','Social','Quinceañero','Congreso','Conferencia','Otro'].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <div><label>Nombre del evento</label><input type="text" id="f-nombre" value="${ev?.nombre||''}" placeholder="Ej. Boda Pérez–González"></div>
+      <div><label>Tipo</label><select id="f-tipo">${['Boda','Corporativo','Social','Quinceañero','Congreso','Conferencia','Otro'].map(t=>`<option ${ev?.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
     </div>
     <div class="form-row s3">
-      <div><label>Fecha</label><input type="date" id="f-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
-      <div><label>Hora inicio</label><input type="time" id="f-inicio"></div>
-      <div><label>Hora fin</label><input type="time" id="f-fin"></div>
+      <div><label>Fecha</label><input type="date" id="f-fecha" value="${ev?.fecha||new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Hora inicio</label><input type="time" id="f-inicio" value="${ev?.hora_inicio?.slice(0,5)||''}"></div>
+      <div><label>Hora fin</label><input type="time" id="f-fin" value="${ev?.hora_fin?.slice(0,5)||''}"></div>
     </div>
-    <div class="form-row s1"><div><label>Subtítulo</label><textarea id="f-sub" placeholder="Ej. Ceremonia y Recepción"></textarea></div></div>
+    <div class="form-row s1"><div><label>Subtítulo</label><textarea id="f-sub" placeholder="Ej. Ceremonia y Recepción">${ev?.subtitulo||''}</textarea></div></div>
     <div class="form-row s1"><div>
       <label>Color de acento</label>
       <div class="color-row">${colors.map(c=>`<div class="cswatch ${c===selectedColor?'sel':''}" style="background:${c};${c==='#FFFFFF'?'border:1px solid #ccc':''}" onclick="pickColor(this,'${c}')"></div>`).join('')}</div>
@@ -753,31 +762,57 @@ async function addVideo(input){
 async function saveEvento(){
   const btn=document.getElementById('save-ev-btn');
   btn.disabled=true;btn.textContent='Guardando...';showSaving(true);
+
+  const nombre=document.getElementById('f-nombre').value;
+  const horaInicio=document.getElementById('f-inicio').value;
+  const horaFin=document.getElementById('f-fin').value;
+
+  if(!nombre||!horaInicio||!horaFin){
+    showToast('Completa nombre, hora inicio y hora fin',true);
+    btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;
+  }
+
   const payload={
     salon_id:activeSalonId,
-    nombre:document.getElementById('f-nombre').value,
+    nombre,
     tipo:document.getElementById('f-tipo').value,
     subtitulo:document.getElementById('f-sub').value,
     fecha:document.getElementById('f-fecha').value,
-    hora_inicio:document.getElementById('f-inicio').value,
-    hora_fin:document.getElementById('f-fin').value,
+    hora_inicio:horaInicio,
+    hora_fin:horaFin,
     color_acento:selectedColor,
   };
+
   const url=editingEventId?`${BASE}/eventos?id=${editingEventId}`:`${BASE}/eventos`;
   const method=editingEventId?'PUT':'POST';
   const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
   const d=await r.json();
-  if(!r.ok){showToast(d.error||'Error',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
+  if(!r.ok){showToast(d.error||'Error al guardar',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
   const eventoId=d.id;
+
+  // Update duration of existing medios that changed
   for(let i=0;i<activeEventMedias.length;i++){
     const m=activeEventMedias[i];
-    if(!m._new)continue;
-    const mp={evento_id:eventoId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||5};
-    if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}
-    else mp.url=m.url;
-    await fetch(`${BASE}/medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    if(m.id&&!m._new){
+      // Existing medio - update duration and order
+      await fetch(`${BASE}/medios?id=${m.id}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+        body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos||5})
+      });
+    } else if(m._new){
+      // New medio - upload
+      const mp={evento_id:eventoId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||5};
+      if(m.tipo==='imagen'&&m._base64){
+        mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';
+      } else {
+        mp.url=m.url;
+      }
+      await fetch(`${BASE}/medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    }
   }
-  showSaving(false);showToast('Evento guardado');closeEventForm();loadEventos();
+
+  showSaving(false);showToast('Evento guardado correctamente');closeEventForm();loadEventos();
 }
 
 async function deleteEvento(id){
