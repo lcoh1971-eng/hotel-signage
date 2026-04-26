@@ -232,6 +232,40 @@ textarea{resize:none;height:58px}
 .pf-hora-lbl{font-size:.6vw;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);}
 .pf-hora-val{font-weight:500;}
 
+/* UPSELLING */
+.up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:20px;}
+.up-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.up-card-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--border);}
+.up-card-title{font-size:14px;font-weight:500;}
+.up-card-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.up-card-body{padding:14px 18px;}
+.up-timeline{display:flex;flex-direction:column;gap:6px;}
+.up-slide-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface);border-radius:6px;border:.5px solid var(--border);}
+.up-slide-thumb{width:48px;height:30px;border-radius:4px;object-fit:cover;background:#eee;flex-shrink:0;}
+.up-slide-thumb-vid{width:48px;height:30px;border-radius:4px;background:#111;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.up-slide-info{flex:1;font-size:11px;color:var(--muted);}
+.up-slide-dur{font-size:11px;font-weight:500;color:var(--marriott);white-space:nowrap;}
+.up-badge-all{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(59,109,17,.12);color:#3B6D11;font-weight:500;}
+.up-badge-specific{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(184,150,46,.12);color:#7A6115;font-weight:500;}
+.up-badge-off{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(136,135,128,.12);color:var(--muted);font-weight:500;}
+
+/* UPSELLING FORM */
+.up-form-wrap{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;}
+.up-salon-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px;}
+.up-salon-check{display:flex;align-items:center;gap:8px;padding:6px 10px;border:.5px solid var(--border);border-radius:6px;cursor:pointer;}
+.up-salon-check input{width:15px;height:15px;accent-color:var(--marriott);}
+.up-salon-check label{font-size:12px;cursor:pointer;}
+.up-timeline-builder{margin-top:12px;}
+.up-timeline-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.up-tl-item{display:grid;grid-template-columns:56px 1fr auto auto;gap:8px;align-items:center;padding:8px;background:var(--surface);border-radius:8px;border:.5px solid var(--border);}
+.up-tl-thumb{width:56px;height:35px;border-radius:4px;object-fit:cover;background:#eee;}
+.up-tl-thumb-vid{width:56px;height:35px;border-radius:4px;background:#111;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.up-tl-name{font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.up-tl-type{font-size:10px;color:var(--muted);}
+.up-tl-dur{display:flex;align-items:center;gap:4px;}
+.up-tl-dur input{width:52px;padding:4px 6px;border:.5px solid var(--border);border-radius:5px;font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;}
+.up-tl-dur span{font-size:11px;color:var(--muted);}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;border-left:3px solid var(--marriott);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s}
 .toast.show{transform:translateY(0);opacity:1}
@@ -265,6 +299,7 @@ textarea{resize:none;height:58px}
     <button class="nav-btn active" onclick="showPanel('eventos')">Eventos</button>
     <button class="nav-btn" onclick="showPanel('agenda')">Agenda</button>
     <button class="nav-btn" onclick="showPanel('salones')">Salones</button>
+    <button class="nav-btn" onclick="showPanel('upselling')">🎯 Upselling</button>
     <a href="/bi" class="nav-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">📊 BI</a>
   </div>
   <button class="logout-btn" onclick="doLogout()">Salir</button>
@@ -335,6 +370,23 @@ textarea{resize:none;height:58px}
       <tbody id="salones-tbody"></tbody>
     </table>
     <div id="salon-form-area" style="margin-top:20px;display:none"></div>
+  </div>
+</div>
+
+<!-- ══ UPSELLING PANEL ══ -->
+<div id="panel-upselling" class="panel" style="display:none">
+  <div class="main">
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">Upselling — Carrusel Promocional</div>
+        <div class="sec-sub">Se muestra en tabletas cuando no hay evento activo</div>
+      </div>
+      <button class="btn-pri" onclick="openUpsellingForm()">+ Nueva campaña</button>
+    </div>
+    <div id="up-form-area" style="display:none"></div>
+    <div id="up-campaigns-grid" class="up-grid">
+      <div class="empty-state">Cargando campañas...</div>
+    </div>
   </div>
 </div>
 
@@ -494,10 +546,12 @@ function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+name).style.display='block';
-  const idx={eventos:0,agenda:1,salones:2};
-  document.querySelectorAll('.nav-btn')[idx[name]].classList.add('active');
+  const idx={eventos:0,agenda:1,salones:2,upselling:3};
+  const navBtns=document.querySelectorAll('.nav-btn');
+  if(idx[name]!==undefined)navBtns[idx[name]]?.classList.add('active');
   if(name==='agenda')loadAgenda();
   if(name==='salones')renderSalonesTable();
+  if(name==='upselling')loadCampaigns();
 }
 
 async function initApp(){
@@ -1241,6 +1295,244 @@ async function saveDesign(){
 function closeDesigner(){
   document.getElementById('designer-overlay').style.display='none';
   designerEventId=null;designerEvent=null;selectedEl=null;
+}
+
+// ══════════════════════════════════════════
+// UPSELLING
+// ══════════════════════════════════════════
+let upEditingId=null;
+let upMedias=[];
+const SUPA_URL_UP='https://gumnnqpaieooxkvhneqi.supabase.co';
+const SUPA_ANON_UP='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
+
+async function loadCampaigns(){
+  const r=await fetch(`${BASE}/upselling`,{headers:{'x-admin-token':TOKEN}});
+  const camps=await r.json();
+  renderCampaigns(camps);
+}
+
+function renderCampaigns(camps){
+  const grid=document.getElementById('up-campaigns-grid');
+  if(!camps||!camps.length){grid.innerHTML='<div class="empty-state">No hay campañas. Crea la primera.</div>';return;}
+  grid.innerHTML=camps.map(c=>{
+    const mediaCount=c.upselling_medios?.length||0;
+    const salonCount=c.upselling_salones?.length||0;
+    const badgeCls=c.activo?(c.aplica_todos?'up-badge-all':'up-badge-specific'):'up-badge-off';
+    const badgeTxt=c.activo?(c.aplica_todos?'Todos los salones':`${salonCount} salón(es)`):'Inactiva';
+    return `<div class="up-card">
+      <div class="up-card-head">
+        <div>
+          <div class="up-card-title">${c.nombre}</div>
+          <div class="up-card-meta">${mediaCount} slides · <span class="${badgeCls}">${badgeTxt}</span></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="ic-btn" onclick="toggleCampaign('${c.id}',${c.activo})" title="${c.activo?'Desactivar':'Activar'}">${c.activo?'⏸':'▶'}</button>
+          <button class="ic-btn" onclick="openUpsellingForm('${c.id}')" title="Editar">✎</button>
+          <button class="ic-btn del" onclick="deleteCampaign('${c.id}')" title="Eliminar">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openUpsellingForm(id=null){
+  upEditingId=id;upMedias=[];
+  let camp=null;
+  let selectedSalons=[];
+  if(id){
+    const r=await fetch(`${BASE}/upselling?id=${id}`,{headers:{'x-admin-token':TOKEN}});
+    camp=await r.json();
+    upMedias=camp.upselling_medios||[];
+    selectedSalons=camp.upselling_salones?.map(s=>s.salon_id)||[];
+  }
+  const aplica=camp?.aplica_todos!==false;
+
+  const area=document.getElementById('up-form-area');
+  area.style.display='block';
+  area.innerHTML=`
+  <div class="up-form-wrap">
+    <div class="form-title">${id?'Editar campaña':'Nueva campaña de upselling'}</div>
+    <div class="form-row">
+      <div><label>Nombre de la campaña</label><input type="text" id="up-nombre" value="${camp?.nombre||''}" placeholder="Ej. Promoción Bodas 2026"></div>
+      <div style="display:flex;align-items:flex-end;gap:10px">
+        <div class="toggle-check" style="margin-top:20px"><input type="checkbox" id="up-activo" ${camp?.activo!==false?'checked':''}><label for="up-activo">Campaña activa</label></div>
+      </div>
+    </div>
+    <div class="form-row s1">
+      <div>
+        <label>Aplicar a</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <div class="toggle-check"><input type="radio" name="up-aplica" id="up-todos" value="todos" ${aplica?'checked':''} onchange="toggleSalonSelector()"><label for="up-todos">Todos los salones</label></div>
+          <div class="toggle-check"><input type="radio" name="up-aplica" id="up-especificos" value="especificos" ${!aplica?'checked':''} onchange="toggleSalonSelector()"><label for="up-especificos">Salones específicos</label></div>
+        </div>
+        <div id="up-salon-selector" style="display:${aplica?'none':'block'};margin-top:12px">
+          <div class="up-salon-checks" id="up-salon-checks">
+            ${allSalones.map(s=>`
+              <div class="up-salon-check">
+                <input type="checkbox" id="ups-${s.id}" value="${s.id}" ${selectedSalons.includes(s.id)?'checked':''}>
+                <label for="ups-${s.id}">${s.nombre}</label>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row s1">
+      <div>
+        <label>Línea de tiempo (slides)</label>
+        <p style="font-size:12px;color:var(--muted);margin:6px 0 10px">Agrega fotos y videos en el orden que quieres que aparezcan. Define la duración de cada uno.</p>
+        <div class="up-timeline-list" id="up-timeline-list"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+            <input type="file" accept="image/*" multiple style="display:none" onchange="upAddImages(this)">🖼 Agregar imágenes
+          </label>
+          <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+            <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="upAddVideo(this)">🎬 Subir video (MP4)
+          </label>
+        </div>
+        <div id="up-video-progress" style="display:none;margin-top:8px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn-sec" onclick="closeUpsellingForm()">Cancelar</button>
+      <button class="btn-pri" onclick="saveCampaign()">Guardar campaña</button>
+    </div>
+  </div>`;
+
+  renderUpTimeline();
+  area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function toggleSalonSelector(){
+  const todos=document.getElementById('up-todos').checked;
+  document.getElementById('up-salon-selector').style.display=todos?'none':'block';
+}
+
+function renderUpTimeline(){
+  const list=document.getElementById('up-timeline-list');
+  if(!list)return;
+  if(!upMedias.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px">Sin slides. Agrega imágenes o videos.</div>';return;}
+  list.innerHTML=upMedias.map((m,i)=>`
+    <div class="up-tl-item">
+      ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:
+        `<div class="up-tl-thumb-vid">▶</div>`}
+      <div>
+        <div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,30)}</div>
+        <div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div>
+      </div>
+      <div class="up-tl-dur">
+        <input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)">
+        <span>seg</span>
+      </div>
+      <button class="ic-btn del" onclick="upRemoveMedia(${i})" title="Quitar">✕</button>
+    </div>`).join('');
+}
+
+function upSetDur(i,val){upMedias[i].duracion_segundos=parseInt(val)||10;}
+function upRemoveMedia(i){upMedias.splice(i,1);renderUpTimeline();}
+
+async function upAddImages(input){
+  const files=Array.from(input.files);
+  for(const file of files){
+    await new Promise(resolve=>{
+      const reader=new FileReader();
+      reader.onload=e=>{
+        upMedias.push({tipo:'imagen',url:e.target.result,_base64:e.target.result.split(',')[1],_file:file,_name:file.name,duracion_segundos:10,orden:upMedias.length,_new:true});
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  renderUpTimeline();
+}
+
+async function upAddVideo(input){
+  if(!input.files[0])return;
+  const file=input.files[0];
+  const prog=document.getElementById('up-video-progress');
+  if(prog){prog.style.display='block';prog.textContent='⏳ Subiendo video... 0%';}
+  try{
+    const filename=`upselling-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const uploadUrl=`${SUPA_URL_UP}/storage/v1/object/imagenes-eventos/${filename}`;
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',uploadUrl);
+    xhr.setRequestHeader('Authorization',`Bearer ${SUPA_ANON_UP}`);
+    xhr.setRequestHeader('Content-Type',file.type||'video/mp4');
+    xhr.setRequestHeader('x-upsert','false');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog.textContent=`⏳ Subiendo video... ${Math.round(e.loaded/e.total*100)}%`;};
+    await new Promise((resolve,reject)=>{
+      xhr.onload=()=>{
+        if(xhr.status===200||xhr.status===201){
+          const publicUrl=`${SUPA_URL_UP}/storage/v1/object/public/imagenes-eventos/${filename}`;
+          upMedias.push({tipo:'video_archivo',url:publicUrl,_name:file.name,duracion_segundos:15,orden:upMedias.length,_new:true,_uploaded:true});
+          resolve();
+        } else reject(new Error(`${xhr.status}`));
+      };
+      xhr.onerror=()=>reject(new Error('Network error'));
+      xhr.send(file);
+    });
+    if(prog)prog.style.display='none';
+    renderUpTimeline();
+    showToast('Video subido correctamente');
+  }catch(err){
+    if(prog)prog.style.display='none';
+    showToast('Error subiendo video: '+err.message,true);
+  }
+}
+
+async function saveCampaign(){
+  const nombre=document.getElementById('up-nombre').value.trim();
+  if(!nombre){showToast('Ingresa un nombre para la campaña',true);return;}
+  const aplica_todos=document.getElementById('up-todos').checked;
+  const activo=document.getElementById('up-activo').checked;
+  const salon_ids=aplica_todos?[]:Array.from(document.querySelectorAll('#up-salon-checks input:checked')).map(i=>i.value);
+
+  const payload={nombre,activo,aplica_todos,salon_ids};
+  const url=upEditingId?`${BASE}/upselling?id=${upEditingId}`:`${BASE}/upselling`;
+  const method=upEditingId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(!r.ok){showToast(d.error||'Error',true);return;}
+  const campId=d.id;
+
+  // Save medios
+  for(let i=0;i<upMedias.length;i++){
+    const m=upMedias[i];
+    if(m.id&&!m._new){
+      // Update existing
+      await fetch(`${BASE}/upselling-medios?id=${m.id}`,{
+        method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+        body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos})
+      });
+    } else if(m._new){
+      const mp={upselling_id:campId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||10};
+      if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}
+      else mp.url=m.url;
+      await fetch(`${BASE}/upselling-medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    }
+  }
+
+  showToast('Campaña guardada. Las tabletas se actualizan en 30 segundos.');
+  closeUpsellingForm();
+  loadCampaigns();
+}
+
+async function toggleCampaign(id,current){
+  await fetch(`${BASE}/upselling?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});
+  showToast(current?'Campaña desactivada':'Campaña activada');
+  loadCampaigns();
+}
+
+async function deleteCampaign(id){
+  if(!confirm('¿Eliminar esta campaña de upselling?'))return;
+  const r=await fetch(`${BASE}/upselling?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+  if(r.ok){showToast('Campaña eliminada');loadCampaigns();}else showToast('Error',true);
+}
+
+function closeUpsellingForm(){
+  document.getElementById('up-form-area').style.display='none';
+  upEditingId=null;upMedias=[];
 }
 
 // ── DATE / UTILS ──
