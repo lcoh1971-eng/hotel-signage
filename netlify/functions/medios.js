@@ -70,11 +70,14 @@ exports.handler = async (event) => {
     return { statusCode: 201, headers, body: JSON.stringify(data) };
   }
 
-  // PUT — actualizar orden
+  // PUT — actualizar orden y/o duracion
   if (event.httpMethod === 'PUT' && id) {
+    const updates = {};
+    if (body.orden !== undefined) updates.orden = body.orden;
+    if (body.duracion_segundos !== undefined) updates.duracion_segundos = body.duracion_segundos;
     const { data, error } = await supabase
       .from('evento_medios')
-      .update({ orden: body.orden })
+      .update(updates)
       .eq('id', id).select().single();
     if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
     return { statusCode: 200, headers, body: JSON.stringify(data) };
