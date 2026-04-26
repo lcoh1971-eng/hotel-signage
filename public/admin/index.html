@@ -1734,25 +1734,32 @@ function buildUpElement(type){
   el.className='up-d-element';
   el.dataset.type=type;
   el.id='up-d-el-'+type;
+  const s=upCanvasScale;
 
   if(type==='logo'){
-    const h=(d.logo_size||50)*upCanvasScale;
-    el.style.cssText=`top:${d.logo_top||'3%'};right:${d.logo_right||'3%'};left:${d.logo_left||'auto'};`;
-    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${6*upCanvasScale}px ${10*upCanvasScale}px;border-radius:${4*upCanvasScale}px;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
+    const h=(d.logo_size||50)*s;
+    // Logo always uses % positions stored as left+top or right+top
+    const hasCustomPos=(d.logo_left&&d.logo_left!=='auto');
+    if(hasCustomPos){
+      el.style.cssText=`left:${d.logo_left};top:${d.logo_top||'3%'};right:auto;position:absolute;`;
+    } else {
+      el.style.cssText=`right:${d.logo_right||'3%'};top:${d.logo_top||'3%'};left:auto;position:absolute;`;
+    }
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px ${Math.round(10*s)}px;border-radius:${Math.round(4*s)}px;display:inline-block;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
   } else if(type==='text'){
-    el.style.cssText=`left:${d.text_x||'50%'};top:${d.text_y||'75%'};transform:translate(-50%,-50%);width:${d.text_w||'70%'};text-align:${d.text_align||'center'};`;
+    el.style.cssText=`left:${d.text_x||'50%'};top:${d.text_y||'75%'};transform:translate(-50%,-50%);width:${d.text_w||'70%'};text-align:${d.text_align||'center'};position:absolute;`;
     const titulo=d.titulo_global||'Título de campaña';
     const sub=d.subtitulo_global||'Subtítulo promocional';
     el.innerHTML=`<div class="d-handle"></div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;">${titulo}</div>
-      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);margin-top:6px;">${sub}</div>`;
+      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);margin-top:${Math.round(6*s)}px;">${sub}</div>`;
   } else if(type==='qr'){
-    const qrS=(d.qr_size||100)*upCanvasScale;
-    el.style.cssText=`left:${d.qr_x||'3%'};bottom:${d.qr_y||'3%'};top:auto;`;
+    const qrS=Math.round((d.qr_size||100)*s);
+    el.style.cssText=`left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};position:absolute;`;
     const qrUrl=d.qr_url||'https://marriott.com';
-    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${6*upCanvasScale}px;border-radius:${6*upCanvasScale}px;display:inline-block;">
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px;border-radius:${Math.round(6*s)}px;display:inline-block;">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}" style="width:${qrS}px;height:${qrS}px;display:block;">
-      ${d.qr_texto?`<div style="font-size:${9*upCanvasScale}px;text-align:center;color:#333;margin-top:${3*upCanvasScale}px;">${d.qr_texto}</div>`:''}
+      ${d.qr_texto?`<div style="font-size:${Math.round(9*s)}px;text-align:center;color:#333;margin-top:${Math.round(3*s)}px;max-width:${qrS}px;">${d.qr_texto}</div>`:''}
     </div>`;
   }
 
@@ -1823,10 +1830,13 @@ function onUpDrag(e){
   const dx=e.clientX-upDragState.startX;
   const dy=e.clientY-upDragState.startY;
   const el=upDragState.el;
+  // Move visually during drag using pixel offsets
+  el.style.position='absolute';
   el.style.transform='none';
   el.style.left=(upDragState.origLeft+dx)+'px';
   el.style.top=(upDragState.origTop+dy)+'px';
-  el.style.right='auto';el.style.bottom='auto';
+  el.style.right='auto';
+  el.style.bottom='auto';
 }
 
 function endUpDrag(e){
@@ -1837,12 +1847,28 @@ function endUpDrag(e){
   const canvas=document.getElementById('up-designer-canvas');
   const cr=canvas.getBoundingClientRect();
   const er=el.getBoundingClientRect();
+  // Always save as percentages of canvas size for responsive display
   const lPct=((er.left-cr.left)/cr.width*100).toFixed(1)+'%';
   const tPct=((er.top-cr.top)/cr.height*100).toFixed(1)+'%';
   const type=upDragState.type;
-  if(type==='logo'){upDesign.logo_left=lPct;upDesign.logo_top=tPct;upDesign.logo_right='auto';}
-  else if(type==='text'){upDesign.text_x=lPct;upDesign.text_y=tPct;upDesign.text_transform='none';}
-  else if(type==='qr'){upDesign.qr_x=lPct;upDesign.qr_y=tPct;}
+  if(type==='logo'){
+    upDesign.logo_left=lPct;
+    upDesign.logo_top=tPct;
+    upDesign.logo_right='auto';
+  } else if(type==='text'){
+    upDesign.text_x=lPct;
+    upDesign.text_y=tPct;
+    upDesign.text_transform='none';
+    upDesign.text_w='60%'; // keep width reasonable after drag
+  } else if(type==='qr'){
+    upDesign.qr_x=lPct;
+    upDesign.qr_y_top=tPct;
+    upDesign.qr_y_bottom='auto';
+  }
+  // Rebuild element with new position
+  el.remove();
+  buildUpElement(type);
+  document.getElementById('up-d-el-'+type)?.classList.add('selected');
   upDragState=null;
 }
 
