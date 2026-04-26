@@ -302,14 +302,15 @@ async function loadUpselling(){
 function startIdleCarousel(){
   if(!upCampaign||!upCampaign.upselling_medios||!upCampaign.upselling_medios.length)return;
   if(upSlideTimer)clearTimeout(upSlideTimer);
-  // Show default screen first for IDLE_SHOW_SECONDS, then start promo
-  upSlideTimer=setTimeout(()=>showPromoSlide(0), IDLE_SHOW_SECONDS*1000);
+  // Get default duration from design config
+  const d=upCampaign.diseno||{};
+  const defaultDur=(parseInt(d.default_dur)||8)*1000;
+  // Show default screen first, then start promo cycle
+  upSlideTimer=setTimeout(()=>showPromoSlide(0), defaultDur);
 }
 
-function buildQR(url, size=120){
-  // Generate QR using Google Charts API
-  const encoded=encodeURIComponent(url);
-  return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}" style="width:${size}px;height:${size}px;display:block;border-radius:6px;">`;
+function buildQR(url,size=120){
+  return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}" style="width:${size}px;height:${size}px;display:block;border-radius:4px;">`;
 }
 
 function showPromoSlide(idx){
@@ -322,65 +323,82 @@ function showPromoSlide(idx){
   const idle=document.getElementById('screen-idle');
   const promo=document.getElementById('screen-promo');
 
-  // Background media
+  // ── Background ──
   let bgHtml='';
   if(m.tipo==='imagen'){
     bgHtml=`<div style="position:absolute;inset:0;background:url('${m.url}') center/cover no-repeat;"></div>`;
   } else if(m.tipo==='video_archivo'){
-    bgHtml=`<video src="${m.url}" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"></video>`;
+    bgHtml=`<video src="${m.url}" autoplay muted playsinline loop style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"></video>`;
   }
 
-  // Overlay
+  // ── Overlay ──
   const ov=parseFloat(d.overlay||50)/100;
-  const overlayHtml=`<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%);z-index:1;"></div>`;
+  const overlayHtml=`<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%);z-index:1;pointer-events:none;"></div>`;
 
-  // Logo (always top right)
-  const logoHtml=`<div style="position:absolute;top:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);z-index:3;">
-    <div style="background:white;padding:8px 14px;border-radius:6px;">
-      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${d.logo_size||50}px;width:auto;display:block;">
+  // ── Logo ──
+  const logoTop=d.logo_top||'3%';
+  const logoRight=d.logo_right||'3%';
+  const logoLeft=d.logo_left||'auto';
+  const logoSize=d.logo_size||50;
+  const logoHtml=`<div style="position:absolute;top:${logoTop};right:${logoRight};left:${logoLeft};z-index:3;">
+    <div style="background:white;padding:8px 14px;border-radius:6px;display:inline-block;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${logoSize}px;width:auto;display:block;">
     </div>
   </div>`;
 
-  // Text content
-  const titulo=m.titulo||d.titulo_global||'';
-  const subtitulo=m.subtitulo||d.subtitulo_global||'';
-  const textHtml=titulo||subtitulo?`<div style="position:absolute;left:${d.text_x||'50%'};top:${d.text_y||'75%'};transform:translate(-50%,-50%);width:${d.text_w||'70%'};text-align:${d.text_align||'center'};z-index:2;">
-    ${titulo?`<div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;margin-bottom:8px;">${titulo}</div>`:''}
-    ${subtitulo?`<div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);letter-spacing:.04em;">${subtitulo}</div>`:''}
+  // ── Text ──
+  const titulo=d.titulo_global||'';
+  const subtitulo=d.subtitulo_global||'';
+  const textX=d.text_x||'50%';
+  const textY=d.text_y||'75%';
+  const textTransform=d.text_transform||'translate(-50%,-50%)';
+  const textW=d.text_w||'70%';
+  const textAlign=d.text_align||'center';
+  const tituloSize=d.titulo_size||'3.5vw';
+  const subSize=d.sub_size||'1.3vw';
+  const textHtml=(titulo||subtitulo)?`<div style="position:absolute;left:${textX};top:${textY};transform:${textTransform};width:${textW};text-align:${textAlign};z-index:2;">
+    ${titulo?`<div style="font-family:'Cormorant Garamond',serif;font-size:${tituloSize};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;margin-bottom:8px;">${titulo}</div>`:''}
+    ${subtitulo?`<div style="font-family:'DM Sans',sans-serif;font-size:${subSize};color:rgba(255,255,255,.75);letter-spacing:.04em;">${subtitulo}</div>`:''}
   </div>`:'';
 
-  // QR code
-  const qrUrl=upCampaign.qr_url||'';
-  const qrHtml=qrUrl?`<div style="position:absolute;left:${d.qr_x||'3%'};bottom:${d.qr_y||'3%'};z-index:3;">
+  // ── QR ──
+  const qrUrl=d.qr_url||upCampaign.qr_url||'';
+  const qrTxt=d.qr_texto||upCampaign.qr_texto||'';
+  const qrSize=d.qr_size||100;
+  const qrX=d.qr_x||'3%';
+  const qrY=d.qr_y||'3%';
+  const qrHtml=qrUrl?`<div style="position:absolute;left:${qrX};bottom:auto;top:${qrY};z-index:3;">
     <div style="background:white;padding:8px;border-radius:8px;display:inline-block;">
-      ${buildQR(qrUrl, d.qr_size||100)}
-      ${upCampaign.qr_texto?`<div style="font-size:9px;text-align:center;color:#333;margin-top:4px;font-family:sans-serif;">${upCampaign.qr_texto}</div>`:''}
+      ${buildQR(qrUrl,qrSize)}
+      ${qrTxt?`<div style="font-size:9px;text-align:center;color:#333;margin-top:4px;font-family:sans-serif;max-width:${qrSize}px;">${qrTxt}</div>`:''}
     </div>
   </div>`:'';
 
-  // Clock
-  const clockHtml=`<div style="position:absolute;bottom:clamp(16px,2.5vw,36px);right:clamp(20px,3vw,44px);z-index:3;font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;" id="promo-clock"></div>`;
+  // ── Clock ──
+  const clockHtml=`<div id="promo-clock" style="position:absolute;bottom:3%;left:3%;z-index:3;font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;"></div>`;
 
   promo.innerHTML=bgHtml+overlayHtml+logoHtml+textHtml+qrHtml+clockHtml;
-
-  // Update promo clock
-  const pc=promo.querySelector('#promo-clock');
+  const pc=document.getElementById('promo-clock');
   if(pc)pc.textContent=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
 
+  // Transition
   idle.style.opacity='0';
   promo.style.display='block';
   setTimeout(()=>{promo.style.opacity='1';},50);
 
+  // Schedule next
   const dur=(m.duracion_segundos||10)*1000;
   upSlideTimer=setTimeout(()=>{
     const next=(idx+1)%medios.length;
     if(next===0){
+      // Finished all slides — back to default
       showingPromo=false;
       promo.style.opacity='0';
       setTimeout(()=>{
         promo.style.display='none';
         promo.innerHTML='';
         idle.style.opacity='1';
+        // Restart cycle after default duration
         startIdleCarousel();
       },600);
     } else {
