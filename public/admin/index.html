@@ -1710,10 +1710,12 @@ function openUpDesigner(){
 function buildUpCanvas(){
   const wrap=document.getElementById('up-canvas-wrap');
   const canvas=document.getElementById('up-designer-canvas');
-  const ww=wrap.clientWidth-40;
-  const wh=wrap.clientHeight-40;
+  // Use window size as fallback if wrap has no dimensions yet
+  const ww=Math.max(wrap.clientWidth-40, window.innerWidth*0.7);
+  const wh=Math.max(wrap.clientHeight-40, window.innerHeight-100);
   let cw=ww,ch=ww*9/16;
   if(ch>wh){ch=wh;cw=wh*16/9;}
+  cw=Math.round(cw);ch=Math.round(ch);
   canvas.style.width=cw+'px';canvas.style.height=ch+'px';
   upCanvasScale=cw/1920;
 
