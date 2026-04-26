@@ -45,7 +45,7 @@ exports.handler = async (event) => {
 
     const { data, error } = await supabase
       .from('upselling_medios')
-      .insert([{ upselling_id: body.upselling_id, tipo: body.tipo, url: body.url, duracion_segundos: body.duracion_segundos || 10, orden: body.orden || 0 }])
+      .insert([{ upselling_id: body.upselling_id, tipo: body.tipo, url: body.url, duracion_segundos: body.duracion_segundos || 10, orden: body.orden || 0, titulo: body.titulo||'', subtitulo: body.subtitulo||'' }])
       .select().single();
     if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
     return { statusCode: 201, headers, body: JSON.stringify(data) };
@@ -55,6 +55,8 @@ exports.handler = async (event) => {
     const updates = {};
     if (body.orden !== undefined) updates.orden = body.orden;
     if (body.duracion_segundos !== undefined) updates.duracion_segundos = body.duracion_segundos;
+    if (body.titulo !== undefined) updates.titulo = body.titulo;
+    if (body.subtitulo !== undefined) updates.subtitulo = body.subtitulo;
     const { data, error } = await supabase
       .from('upselling_medios').update(updates).eq('id', id).select().single();
     if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
