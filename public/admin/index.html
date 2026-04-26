@@ -266,6 +266,31 @@ textarea{resize:none;height:58px}
 .up-tl-dur input{width:52px;padding:4px 6px;border:.5px solid var(--border);border-radius:5px;font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;}
 .up-tl-dur span{font-size:11px;color:var(--muted);}
 
+/* UPSELLING DESIGNER */
+#up-designer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:250;display:none;flex-direction:column;}
+.up-designer-topbar{background:#111;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;}
+.up-designer-body{display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;}
+.up-canvas-wrap{display:flex;align-items:center;justify-content:center;background:#0D0D0B;padding:20px;overflow:hidden;}
+.up-canvas{position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+.up-canvas-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.up-canvas-overlay{position:absolute;inset:0;}
+.up-d-element{position:absolute;cursor:move;user-select:none;padding:4px;}
+.up-d-element .d-handle{position:absolute;inset:-4px;border:1.5px dashed rgba(255,255,255,.3);border-radius:4px;pointer-events:none;opacity:0;transition:opacity .15s;}
+.up-d-element:hover .d-handle,.up-d-element.selected .d-handle{opacity:1;}
+.up-designer-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.up-d-section{margin-bottom:20px;}
+.up-d-section-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.up-d-prop{margin-bottom:10px;}
+.up-d-prop label{display:block;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase;}
+.up-d-prop input[type=range]{width:100%;accent-color:var(--marriott);}
+.up-d-prop input[type=text],.up-d-prop input[type=url],.up-d-prop input[type=number],.up-d-prop select{width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.up-d-prop-row{display:flex;align-items:center;justify-content:space-between;}
+.up-d-prop-val{font-size:11px;color:var(--marriott);min-width:36px;text-align:right;}
+.up-el-list{display:flex;flex-direction:column;gap:4px;}
+.up-el-item{padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.5);transition:background .15s;}
+.up-el-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.8);}
+.up-el-item.active{background:rgba(160,33,63,.2);color:#fff;border-left:2px solid var(--marriott);}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;border-left:3px solid var(--marriott);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s}
 .toast.show{transform:translateY(0);opacity:1}
@@ -518,6 +543,78 @@ textarea{resize:none;height:58px}
       <div class="pf-hora" id="pf-hora">
         <div class="pf-hora-lbl">Hasta las</div>
         <div class="pf-hora-val" id="pf-hora-val"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPSELLING DESIGNER -->
+<div id="up-designer-overlay">
+  <div class="up-designer-topbar">
+    <div style="font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.06em" id="up-designer-title">Editor Visual — Upselling</div>
+    <div style="display:flex;gap:8px">
+      <button class="d-btn" onclick="closeUpDesigner()">✕ Cerrar sin guardar</button>
+      <button class="d-btn primary" onclick="saveUpDesign()">💾 Guardar diseño</button>
+    </div>
+  </div>
+  <div class="up-designer-body">
+    <div class="up-canvas-wrap" id="up-canvas-wrap">
+      <div class="up-canvas" id="up-designer-canvas">
+        <div class="up-canvas-bg" id="up-canvas-bg"></div>
+        <div class="up-canvas-overlay" id="up-canvas-overlay"></div>
+      </div>
+    </div>
+    <div class="up-designer-sidebar">
+      <div class="up-d-section">
+        <div class="up-d-section-title">Elementos</div>
+        <div class="up-el-list">
+          <div class="up-el-item" onclick="selectUpEl('logo')" id="up-eli-logo"><span>🏨</span> Logo del hotel</div>
+          <div class="up-el-item" onclick="selectUpEl('text')" id="up-eli-text"><span>📝</span> Texto promocional</div>
+          <div class="up-el-item" onclick="selectUpEl('qr')" id="up-eli-qr"><span>📱</span> Código QR</div>
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-logo" style="display:none">
+        <div class="up-d-section-title">Logo del hotel</div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-logo">50px</span></div>
+          <input type="range" min="20" max="120" step="5" value="50" id="up-dp-logo" oninput="updateUpElement()">
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-text" style="display:none">
+        <div class="up-d-section-title">Texto promocional</div>
+        <div class="up-d-prop"><label>Título global de campaña</label><input type="text" id="up-dp-titulo-val" placeholder="Ej. ¡Celebra con nosotros!" oninput="updateUpElement()"></div>
+        <div class="up-d-prop"><label>Subtítulo global</label><input type="text" id="up-dp-sub-val" placeholder="Ej. Contáctanos hoy" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño título</label><span class="up-d-prop-val" id="up-dpv-titulo">3.5vw</span></div>
+          <input type="range" min="1.5" max="8" step="0.5" value="3.5" id="up-dp-titulo" oninput="updateUpElement()">
+        </div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño subtítulo</label><span class="up-d-prop-val" id="up-dpv-sub">1.3vw</span></div>
+          <input type="range" min="0.6" max="3" step="0.1" value="1.3" id="up-dp-sub" oninput="updateUpElement()">
+        </div>
+        <div class="up-d-prop"><label>Alineación</label>
+          <select id="up-dp-align" onchange="updateUpElement()">
+            <option value="center">Centro</option>
+            <option value="left">Izquierda</option>
+            <option value="right">Derecha</option>
+          </select>
+        </div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Overlay oscuridad</label><span class="up-d-prop-val" id="up-dpv-overlay">50%</span></div>
+          <input type="range" min="0" max="90" step="5" value="50" id="up-dp-overlay" oninput="updateUpOverlay()">
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-qr" style="display:none">
+        <div class="up-d-section-title">Código QR</div>
+        <div class="up-d-prop"><label>URL o número de WhatsApp</label><input type="text" id="up-dp-qr-url" placeholder="https://wa.me/507XXXXXXXX" oninput="updateUpElement()"></div>
+        <div class="up-d-prop"><label>Texto bajo el QR</label><input type="text" id="up-dp-qr-text" placeholder="Ej. Contáctanos" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño QR</label><span class="up-d-prop-val" id="up-dpv-qr">100px</span></div>
+          <input type="range" min="60" max="200" step="10" value="100" id="up-dp-qr-size" oninput="updateUpElement()">
+        </div>
       </div>
     </div>
   </div>
@@ -1389,6 +1486,7 @@ async function openUpsellingForm(id=null){
           <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
             <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="upAddVideo(this)">🎬 Subir video (MP4)
           </label>
+          <button class="btn-sec" style="display:flex;align-items:center;gap:6px" onclick="openUpDesigner()">🎨 Diseñar pantalla</button>
         </div>
         <div id="up-video-progress" style="display:none;margin-top:8px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
       </div>
@@ -1412,21 +1510,39 @@ function toggleSalonSelector(){
 function renderUpTimeline(){
   const list=document.getElementById('up-timeline-list');
   if(!list)return;
-  if(!upMedias.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px">Sin slides. Agrega imágenes o videos.</div>';return;}
+  if(!upMedias.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">Sin slides. Agrega imágenes o videos.</div>';return;}
   list.innerHTML=upMedias.map((m,i)=>`
-    <div class="up-tl-item">
-      ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:
-        `<div class="up-tl-thumb-vid">▶</div>`}
-      <div>
-        <div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,30)}</div>
-        <div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div>
+    <div class="up-tl-item" style="display:flex;flex-direction:column;gap:6px;padding:10px;">
+      <div style="display:grid;grid-template-columns:56px 1fr auto auto auto;gap:8px;align-items:center;">
+        ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:
+          `<div class="up-tl-thumb-vid">▶</div>`}
+        <div>
+          <div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,28)}</div>
+          <div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div>
+        </div>
+        <div class="up-tl-dur">
+          <input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)">
+          <span>seg</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},-1)" ${i===0?'disabled':''}>↑</button>
+          <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},1)" ${i===upMedias.length-1?'disabled':''}>↓</button>
+        </div>
+        <button class="ic-btn del" onclick="upRemoveMedia(${i})" title="Quitar">✕</button>
       </div>
-      <div class="up-tl-dur">
-        <input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)">
-        <span>seg</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <input type="text" placeholder="Título de este slide (opcional)" value="${m.titulo||''}" onchange="upSetField(${i},'titulo',this.value)" style="font-size:11px;padding:5px 8px;">
+        <input type="text" placeholder="Subtítulo de este slide (opcional)" value="${m.subtitulo||''}" onchange="upSetField(${i},'subtitulo',this.value)" style="font-size:11px;padding:5px 8px;">
       </div>
-      <button class="ic-btn del" onclick="upRemoveMedia(${i})" title="Quitar">✕</button>
     </div>`).join('');
+}
+
+function upSetField(i,field,val){upMedias[i][field]=val;}
+function upMoveMedia(i,dir){
+  const j=i+dir;
+  if(j<0||j>=upMedias.length)return;
+  [upMedias[i],upMedias[j]]=[upMedias[j],upMedias[i]];
+  renderUpTimeline();
 }
 
 function upSetDur(i,val){upMedias[i].duracion_segundos=parseInt(val)||10;}
@@ -1488,7 +1604,9 @@ async function saveCampaign(){
   const activo=document.getElementById('up-activo').checked;
   const salon_ids=aplica_todos?[]:Array.from(document.querySelectorAll('#up-salon-checks input:checked')).map(i=>i.value);
 
-  const payload={nombre,activo,aplica_todos,salon_ids};
+  const design=window._tempUpDesign||upDesign||{};
+  const payload={nombre,activo,aplica_todos,salon_ids,diseno:design,qr_url:design.qr_url||'',qr_texto:design.qr_texto||''};
+  window._tempUpDesign=null;
   const url=upEditingId?`${BASE}/upselling?id=${upEditingId}`:`${BASE}/upselling`;
   const method=upEditingId?'PUT':'POST';
   const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
@@ -1506,7 +1624,7 @@ async function saveCampaign(){
         body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos})
       });
     } else if(m._new){
-      const mp={upselling_id:campId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||10};
+      const mp={upselling_id:campId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||10,titulo:m.titulo||'',subtitulo:m.subtitulo||''};
       if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}
       else mp.url=m.url;
       await fetch(`${BASE}/upselling-medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
@@ -1533,6 +1651,213 @@ async function deleteCampaign(id){
 function closeUpsellingForm(){
   document.getElementById('up-form-area').style.display='none';
   upEditingId=null;upMedias=[];
+}
+
+// ── UPSELLING DESIGNER ──
+let upDesign={};
+let upSelectedEl=null;
+let upDragState=null;
+let upCanvasScale=1;
+
+function openUpDesigner(){
+  // Load existing design from current campaign or defaults
+  upDesign=Object.assign({
+    logo_size:50,logo_top:'3%',logo_right:'3%',
+    text_x:'50%',text_y:'75%',text_w:'70%',text_align:'center',
+    titulo_size:'3.5vw',sub_size:'1.3vw',
+    titulo_global:'',subtitulo_global:'',
+    qr_url:'',qr_texto:'',qr_size:100,qr_x:'3%',qr_y:'3%',
+    overlay:50,
+  },{});
+
+  document.getElementById('up-designer-title').textContent=`Editor Visual — ${document.getElementById('up-nombre')?.value||'Upselling'}`;
+  document.getElementById('up-designer-overlay').style.display='flex';
+
+  // Load sidebar values
+  document.getElementById('up-dp-logo').value=upDesign.logo_size;
+  document.getElementById('up-dpv-logo').textContent=upDesign.logo_size+'px';
+  document.getElementById('up-dp-titulo').value=parseFloat(upDesign.titulo_size);
+  document.getElementById('up-dpv-titulo').textContent=upDesign.titulo_size;
+  document.getElementById('up-dp-sub').value=parseFloat(upDesign.sub_size);
+  document.getElementById('up-dpv-sub').textContent=upDesign.sub_size;
+  document.getElementById('up-dp-align').value=upDesign.text_align;
+  document.getElementById('up-dp-overlay').value=upDesign.overlay;
+  document.getElementById('up-dpv-overlay').textContent=upDesign.overlay+'%';
+  document.getElementById('up-dp-titulo-val').value=upDesign.titulo_global;
+  document.getElementById('up-dp-sub-val').value=upDesign.subtitulo_global;
+  document.getElementById('up-dp-qr-url').value=upDesign.qr_url;
+  document.getElementById('up-dp-qr-text').value=upDesign.qr_texto;
+  document.getElementById('up-dp-qr-size').value=upDesign.qr_size;
+  document.getElementById('up-dpv-qr').textContent=upDesign.qr_size+'px';
+
+  buildUpCanvas();
+}
+
+function buildUpCanvas(){
+  const wrap=document.getElementById('up-canvas-wrap');
+  const canvas=document.getElementById('up-designer-canvas');
+  const ww=wrap.clientWidth-40;
+  const wh=wrap.clientHeight-40;
+  let cw=ww,ch=ww*9/16;
+  if(ch>wh){ch=wh;cw=wh*16/9;}
+  canvas.style.width=cw+'px';canvas.style.height=ch+'px';
+  upCanvasScale=cw/1920;
+
+  // Background - first media
+  const bg=document.getElementById('up-canvas-bg');
+  const firstImg=upMedias.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;
+  else bg.style.background='#2A2A2A';
+
+  // Overlay
+  const ov=upDesign.overlay/100;
+  document.getElementById('up-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%)`;
+
+  // Remove old elements
+  canvas.querySelectorAll('.up-d-element').forEach(e=>e.remove());
+  buildUpElement('logo');
+  buildUpElement('text');
+  buildUpElement('qr');
+}
+
+function buildUpElement(type){
+  const canvas=document.getElementById('up-designer-canvas');
+  const d=upDesign;
+  const el=document.createElement('div');
+  el.className='up-d-element';
+  el.dataset.type=type;
+  el.id='up-d-el-'+type;
+
+  if(type==='logo'){
+    const h=(d.logo_size||50)*upCanvasScale;
+    el.style.cssText=`top:${d.logo_top||'3%'};right:${d.logo_right||'3%'};left:${d.logo_left||'auto'};`;
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${6*upCanvasScale}px ${10*upCanvasScale}px;border-radius:${4*upCanvasScale}px;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
+  } else if(type==='text'){
+    el.style.cssText=`left:${d.text_x||'50%'};top:${d.text_y||'75%'};transform:translate(-50%,-50%);width:${d.text_w||'70%'};text-align:${d.text_align||'center'};`;
+    const titulo=d.titulo_global||'Título de campaña';
+    const sub=d.subtitulo_global||'Subtítulo promocional';
+    el.innerHTML=`<div class="d-handle"></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;">${titulo}</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);margin-top:6px;">${sub}</div>`;
+  } else if(type==='qr'){
+    const qrS=(d.qr_size||100)*upCanvasScale;
+    el.style.cssText=`left:${d.qr_x||'3%'};bottom:${d.qr_y||'3%'};top:auto;`;
+    const qrUrl=d.qr_url||'https://marriott.com';
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${6*upCanvasScale}px;border-radius:${6*upCanvasScale}px;display:inline-block;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}" style="width:${qrS}px;height:${qrS}px;display:block;">
+      ${d.qr_texto?`<div style="font-size:${9*upCanvasScale}px;text-align:center;color:#333;margin-top:${3*upCanvasScale}px;">${d.qr_texto}</div>`:''}
+    </div>`;
+  }
+
+  el.addEventListener('mousedown',startUpDrag);
+  el.addEventListener('click',()=>selectUpEl(type));
+  canvas.appendChild(el);
+}
+
+function selectUpEl(type){
+  upSelectedEl=type;
+  document.querySelectorAll('.up-d-element').forEach(e=>e.classList.remove('selected'));
+  document.querySelectorAll('.up-el-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('up-d-el-'+type)?.classList.add('selected');
+  document.getElementById('up-eli-'+type)?.classList.add('active');
+  ['logo','text','qr'].forEach(t=>{
+    const p=document.getElementById('up-props-'+t);
+    if(p)p.style.display=t===type?'block':'none';
+  });
+}
+
+function updateUpElement(){
+  const d=upDesign;
+  if(upSelectedEl==='logo'){
+    d.logo_size=parseInt(document.getElementById('up-dp-logo').value);
+    document.getElementById('up-dpv-logo').textContent=d.logo_size+'px';
+  } else if(upSelectedEl==='text'){
+    d.titulo_size=document.getElementById('up-dp-titulo').value+'vw';
+    document.getElementById('up-dpv-titulo').textContent=d.titulo_size;
+    d.sub_size=document.getElementById('up-dp-sub').value+'vw';
+    document.getElementById('up-dpv-sub').textContent=d.sub_size;
+    d.text_align=document.getElementById('up-dp-align').value;
+    d.titulo_global=document.getElementById('up-dp-titulo-val').value;
+    d.subtitulo_global=document.getElementById('up-dp-sub-val').value;
+  } else if(upSelectedEl==='qr'){
+    d.qr_url=document.getElementById('up-dp-qr-url').value;
+    d.qr_texto=document.getElementById('up-dp-qr-text').value;
+    d.qr_size=parseInt(document.getElementById('up-dp-qr-size').value);
+    document.getElementById('up-dpv-qr').textContent=d.qr_size+'px';
+  }
+  const old=document.getElementById('up-d-el-'+upSelectedEl);
+  if(old)old.remove();
+  buildUpElement(upSelectedEl);
+  document.getElementById('up-d-el-'+upSelectedEl)?.classList.add('selected');
+}
+
+function updateUpOverlay(){
+  const val=document.getElementById('up-dp-overlay').value;
+  document.getElementById('up-dpv-overlay').textContent=val+'%';
+  upDesign.overlay=parseInt(val);
+  const ov=parseInt(val)/100;
+  document.getElementById('up-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%)`;
+}
+
+function startUpDrag(e){
+  e.preventDefault();
+  const el=e.currentTarget;
+  const canvas=document.getElementById('up-designer-canvas');
+  const cr=canvas.getBoundingClientRect();
+  const er=el.getBoundingClientRect();
+  upDragState={el,type:el.dataset.type,startX:e.clientX,startY:e.clientY,origLeft:er.left-cr.left,origTop:er.top-cr.top,cw:cr.width,ch:cr.height};
+  document.addEventListener('mousemove',onUpDrag);
+  document.addEventListener('mouseup',endUpDrag);
+  selectUpEl(el.dataset.type);
+}
+
+function onUpDrag(e){
+  if(!upDragState)return;
+  const dx=e.clientX-upDragState.startX;
+  const dy=e.clientY-upDragState.startY;
+  const el=upDragState.el;
+  el.style.transform='none';
+  el.style.left=(upDragState.origLeft+dx)+'px';
+  el.style.top=(upDragState.origTop+dy)+'px';
+  el.style.right='auto';el.style.bottom='auto';
+}
+
+function endUpDrag(e){
+  if(!upDragState)return;
+  document.removeEventListener('mousemove',onUpDrag);
+  document.removeEventListener('mouseup',endUpDrag);
+  const el=upDragState.el;
+  const canvas=document.getElementById('up-designer-canvas');
+  const cr=canvas.getBoundingClientRect();
+  const er=el.getBoundingClientRect();
+  const lPct=((er.left-cr.left)/cr.width*100).toFixed(1)+'%';
+  const tPct=((er.top-cr.top)/cr.height*100).toFixed(1)+'%';
+  const type=upDragState.type;
+  if(type==='logo'){upDesign.logo_left=lPct;upDesign.logo_top=tPct;upDesign.logo_right='auto';}
+  else if(type==='text'){upDesign.text_x=lPct;upDesign.text_y=tPct;upDesign.text_transform='none';}
+  else if(type==='qr'){upDesign.qr_x=lPct;upDesign.qr_y=tPct;}
+  upDragState=null;
+}
+
+async function saveUpDesign(){
+  // Save design to current campaign if editing, or store in temp
+  if(upEditingId){
+    await fetch(`${BASE}/upselling?id=${upEditingId}`,{
+      method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+      body:JSON.stringify({diseno:upDesign,qr_url:upDesign.qr_url,qr_texto:upDesign.qr_texto})
+    });
+    showToast('Diseño guardado');
+  } else {
+    // Store temporarily until campaign is saved
+    window._tempUpDesign=upDesign;
+    showToast('Diseño listo. Guarda la campaña para aplicarlo.');
+  }
+  closeUpDesigner();
+}
+
+function closeUpDesigner(){
+  document.getElementById('up-designer-overlay').style.display='none';
+  upSelectedEl=null;upDragState=null;
 }
 
 // ── DATE / UTILS ──
